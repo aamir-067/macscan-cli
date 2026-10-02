@@ -1,0 +1,11 @@
+#!/bin/bash
+# Test stub: drop sudo's user-switching options and run the command as the caller.
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -u) shift 2;;
+    -H|-n|-E) shift;;
+    --) shift; break;;
+    *) break;;
+  esac
+done
+exec "$@"

@@ -1,17 +1,40 @@
 # mac-triage developer tasks. Run `make help` for the list.
 SHELL := /bin/bash
 VERSION := $(shell cat VERSION)
+# Run bats under /bin/bash (3.2), the shell the tool runs with on every Mac.
+BATS := PATH="/bin:/usr/bin:$$PATH" bats
+SCRIPTS := src/macscan $(wildcard src/core/*.sh src/core/lib/*.sh src/modules/*.sh) src/installer/install.sh $(wildcard scripts/*.sh)
 
-.PHONY: help build clean install
+.PHONY: help build install lint fmt-check test test-unit test-smoke test-detection test-build check clean
 
 help: ## Show this help
-	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-14s %s\n", $$1, $$2}'
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
 build: ## Build dist/install-mac-triage.sh, the tarball and SHA256SUMS
 	@scripts/build.sh
 
 install: build ## Build, then install on this Mac (asks for your password)
 	sudo bash dist/install-mac-triage.sh
+
+lint: ## shellcheck and static checks
+	shellcheck -s bash $(SCRIPTS)
+	$(BATS) tests/static
+
+test-unit: ## Unit tests for the shared libraries and the CLI
+	$(BATS) tests/unit
+
+test-smoke: ## Run modules against a fixture home as the current user
+	$(BATS) tests/smoke
+
+test-detection: ## Detection tests with synthetic fixtures
+	$(BATS) tests/detection
+
+test-build: ## Build the installer and verify it
+	$(BATS) tests/build
+
+test: lint test-unit test-smoke test-detection test-build ## Everything (run before every build or release)
+
+check: test build ## Full gate: all tests, then build
 
 clean: ## Remove build output
 	rm -rf dist

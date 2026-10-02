@@ -1,0 +1,13 @@
+# Resolve `source` paths relative to each script.
+source-path=SCRIPTDIR
+external-sources=true
+
+# Project-wide exceptions, each intentional:
+# SC2016: single-quoted $ inside embedded perl, awk and sqlite code is meant literally.
+disable=SC2016
+# SC2012, SC2010: ls output is shown to the reader as a human listing, not parsed for logic.
+disable=SC2012,SC2010
+# SC2009: modules need full `ps` command lines; pgrep cannot print them in the same format.
+disable=SC2009
+# SC2153: config variables (CLAMAV_SCOPE, ...) come from the sourced config file.
+disable=SC2153

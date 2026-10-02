@@ -50,6 +50,7 @@ for d in /opt/homebrew/lib/node_modules /usr/local/lib/node_modules "$UH"/.nvm/v
   [ -d "$d" ] && { echo "[$d]"; ls -1 "$d" | while read -r p; do echo "$p"; inv global_pkgs "$d | $p"; done; }
 done
 sub "cargo bin"; ls -1 "$UH/.cargo/bin" 2>/dev/null
+# shellcheck disable=SC2088  # label text, not a path
 sub "~/.local/bin"; ls -la "$UH/.local/bin" 2>/dev/null
 sub "Python user packages"; ls -1 "$UH"/Library/Python/*/lib/python/site-packages 2>/dev/null | grep -vE "dist-info|__pycache__" | head -120
 sub "npx cache"; for p in "$UH"/.npm/_npx/*/node_modules; do [ -d "$p" ] && ls -1 "$p" | grep -v '^\.'; done | sort -u | head -150

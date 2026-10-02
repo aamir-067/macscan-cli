@@ -8,6 +8,7 @@ chromium_ext_dirs | while IFS= read -r ed; do
   sub "$bname | $prof"
   for m in "$ed"/*/*/manifest.json; do
     [ -f "$m" ] || continue
+    # shellcheck disable=SC2094  # the path is only passed as a name; the file is read once
     line=$(perl -MJSON::PP -e '
       local $/; my $j=eval{decode_json(<STDIN>)} or exit;
       my $path=$ARGV[0]; my ($id,$ver)=$path=~m{/Extensions/([^/]+)/([^/]+)/manifest\.json$};

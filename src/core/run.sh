@@ -7,7 +7,10 @@ umask 077
 [ "$EUID" -eq 0 ] || { echo "Must run as root."; exit 1; }
 # shellcheck source=/dev/null
 source "$ROOT/config"
-YARAC=/opt/homebrew/bin/yarac; FRESHCLAM=/opt/homebrew/bin/freshclam
+# shellcheck disable=SC2034  # used by core/lib/rules.sh
+YARAC=/opt/homebrew/bin/yarac
+# shellcheck disable=SC2034
+FRESHCLAM=/opt/homebrew/bin/freshclam
 LOG="$STATE/current.log"; PIDF="$STATE/running.pid"; HIST="$STATE/history.log"
 for lib in options modules auto notify rules report; do
   # shellcheck source=/dev/null

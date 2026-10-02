@@ -8,12 +8,12 @@ AS="$UH/Library/Application Support"
 section(){ echo; echo "==================== $* ===================="; }
 sub(){ echo; echo "--- $*"; }
 flag(){ echo "[!] $*"; echo "[$MODULE] $*" >> "$RUN/.flags.raw"; }
-inv(){ local c="$1"; shift; [ -n "$INV" ] && printf '%s\n' "$*" >> "$INV/$c.txt"; }
+inv(){ local c="$1"; shift; [ -n "$INV" ] || return 0; printf '%s\n' "$*" >> "$INV/$c.txt"; }
 asuser(){ launchctl asuser "$UID_N" sudo -H -u "$U" "$@"; }
 tmo(){ local t="$1"; shift; perl -e 'alarm shift; exec @ARGV' "$t" "$@"; }
 sha(){ shasum -a 256 "$1" 2>/dev/null | awk '{print substr($1,1,16)}'; }
 is_self(){ case "$1" in "$ROOT"/*|*com.mactriage.*) return 0;; esac; return 1; }
-is_system_path(){ case "$1" in /System/*|/usr/libexec/*|/usr/sbin/*|/sbin/*|/bin/*|/usr/bin/*|/Library/Apple/*|/System/Volumes/Preboot/*) return 0;; esac; return 1; }
+is_system_path(){ case "$1" in /System/*|/usr/libexec/*|/usr/sbin/*|/sbin/*|/bin/*|/usr/bin/*|/Library/Apple/*) return 0;; esac; return 1; }
 is_dev_path(){ case "$1" in /opt/homebrew/*|/usr/local/Cellar/*|/usr/local/bin/*|"$UH"/.nvm/*|"$UH"/.bun/*|"$UH"/.cargo/*|"$UH"/.rustup/*|"$UH"/.local/*|"$UH"/.npm/*|"$UH"/go/*|"$UH"/.orbstack/*|*/node_modules/*|*/target/debug/*|*/target/release/*) return 0;; esac; return 1; }
 
 sig(){
@@ -45,6 +45,7 @@ redact(){ perl -pe '
 # Folders never walked: cloud drives, VM disks, caches, dependency trees, our own reports
 PB=( -path "$UH/Library" -o -path "$UH/.Trash" -o -path "$UH/.orbstack" -o -path "$OUTBASE" -o -name node_modules -o -path "$UH/.npm" -o -path "$UH/.cache" -o -path "$UH/.gradle" -o -path "$UH/.rustup" -o -path "$UH/.cargo/registry" -o -path "$UH/go/pkg" -o -path "$UH/.bun/install" )
 PRUNE=( \( "${PB[@]}" -o -name .git \) -prune -o )
+# shellcheck disable=SC2034  # used by module 17
 PRUNE_KEEPGIT=( \( "${PB[@]}" \) -prune -o )
 
 # Discovery by structure, so newly installed browsers, editors and AI tools are found automatically

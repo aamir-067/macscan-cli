@@ -7,11 +7,11 @@ cleanup_reports(){
   all=$(find "$OUTBASE" -maxdepth 1 -type d -name 'scan_*' | sort)
   newest=$(echo "$all" | tail -1)
   echo "$all" | while IFS= read -r d; do
-    [ -n "$d" ] && [ "$d" != "$newest" ] && [ -n "$(find "$d" -maxdepth 0 -mtime +"$MAX_AGE_DAYS")" ] && rm -rf "$d" "$d.zip"
+    if [ -n "$d" ] && [ "$d" != "$newest" ] && [ -n "$(find "$d" -maxdepth 0 -mtime +"$MAX_AGE_DAYS")" ]; then rm -rf "$d" "$d.zip"; fi
   done
-  all=$(find "$OUTBASE" -maxdepth 1 -type d -name 'scan_*' | sort); n=$(echo "$all" | grep -c .)
+  all=$(find "$OUTBASE" -maxdepth 1 -type d -name 'scan_*' | sort); n=$(echo "$all" | grep -c . || true)
   if [ "$n" -gt "$KEEP" ]; then echo "$all" | head -n $((n-KEEP)) | while IFS= read -r d; do rm -rf "$d" "$d.zip"; done; fi
-  for z in "$OUTBASE"/scan_*.zip; do [ -f "$z" ] && [ ! -d "${z%.zip}" ] && rm -f "$z"; done
+  for z in "$OUTBASE"/scan_*.zip; do if [ -f "$z" ] && [ ! -d "${z%.zip}" ]; then rm -f "$z"; fi; done
   return 0
 }
 

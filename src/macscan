@@ -59,6 +59,7 @@ follow(){
     if [ $i -gt 60 ]; then echo "The scan did not start. Details: sudo tail $STATE/service.log"; return 1; fi
   done
   tail -n +1 -f "$STATE/current.log" & tp=$!
+  # shellcheck disable=SC2064  # expand $tp now, on purpose
   trap "kill $tp 2>/dev/null; echo; echo 'Stopped watching. The scan continues in the background.'; echo '  macscan --log    watch again'; echo '  macscan --stop   cancel it'; exit 0" INT
   while [ -n "$(running_pid)" ]; do sleep 2; done
   sleep 1; kill $tp 2>/dev/null; wait $tp 2>/dev/null

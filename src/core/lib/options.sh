@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# shellcheck disable=SC2034  # these variables are read by run.sh and the modules
 # Engine option parsing. Sets the scan variables from config defaults and argv.
 
 options_defaults(){

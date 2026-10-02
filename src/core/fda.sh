@@ -1,4 +1,5 @@
 # Full Disk Access detection: tries several protected folders, since paths change between macOS versions
+# shellcheck disable=SC2034  # FDA is read by run.sh
 FDA=no; FDA_DETAIL=""
 for p in "$UH/Library/Safari" "$UH/Library/Mail" "$UH/Library/Messages" "$UH/Library/Application Support/com.apple.TCC"; do
   [ -e "$p" ] || continue

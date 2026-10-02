@@ -12,7 +12,7 @@ section "Signatures of all non-Apple running executables"
 ps -axo comm= | sort -u | while IFS= read -r p; do is_system_path "$p" && continue; [ -e "$p" ] && sigf "$p"; done
 
 section "Processes running from unusual locations"
-ps -axo pid=,user=,comm= | while read -r pid usr path; do
+ps -axo pid=,user=,comm= | while read -r pid _ path; do
   case "$path" in
     "$ROOT"/*) ;;
     "$UH"/.nvm/*|"$UH"/.bun/*|"$UH"/.cargo/*|"$UH"/.rustup/*|"$UH"/.orbstack/*|"$UH"/.antigravity*|"$UH"/.vscode/*|"$UH"/.cursor/*|"$UH"/.local/*|"$UH"/.opencode/*|"$UH"/.npm/*) echo "dev path: pid $pid $path";;

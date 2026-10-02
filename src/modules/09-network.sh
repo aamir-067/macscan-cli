@@ -9,7 +9,7 @@ sub "UDP sockets"; lsof -nP -iUDP | head -80
 
 section "Connection sampling (6 snapshots over 60 seconds)"
 T=$(mktemp /tmp/mactriage.XXXXXX)
-for n in 1 2 3 4 5 6; do lsof -nP -iTCP -sTCP:ESTABLISHED 2>/dev/null | awk 'NR>1 {print $1, $2, $3, $9}'; sleep 10; done | sort | uniq -c | sort -rn > "$T"
+for _ in 1 2 3 4 5 6; do lsof -nP -iTCP -sTCP:ESTABLISHED 2>/dev/null | awk 'NR>1 {print $1, $2, $3, $9}'; sleep 10; done | sort | uniq -c | sort -rn > "$T"
 cat "$T"
 section "Remote endpoints with reverse DNS"
 awk '{print $5}' "$T" | sed -E 's/.*->//; s/:[0-9]+$//; s/^\[//; s/\]$//' | sort -u | grep -vE "^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|::1|fe80)" | head -120 | while read -r ip; do

@@ -16,6 +16,7 @@ grep -rlE --exclude-dir=node_modules --exclude-dir=Library --exclude-dir=.git --
 
 section "package.json install scripts (run automatically on npm/bun install)"
 find "$UH" "${PRUNE[@]}" -name package.json -print 2>/dev/null | while IFS= read -r p; do
+  # shellcheck disable=SC2094  # the path is only passed as a name; the file is read once
   perl -MJSON::PP -e 'local $/; my $j=eval{decode_json(<STDIN>)} or exit; my $s=$j->{scripts}; exit unless ref $s eq "HASH"; for (qw(preinstall install postinstall prepare)) { print "$ARGV[0] | $_: $s->{$_}\n" if exists $s->{$_} }' "$p" < "$p"
 done | head -250
 
