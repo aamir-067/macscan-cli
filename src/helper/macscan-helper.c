@@ -12,6 +12,11 @@ static pid_t child = -1;
 static void forward(int sig) { if (child > 0) kill(-child, sig); }
 
 int main(int argc, char *argv[]) {
+    /* Only root (launchd) may use this binary's Full Disk Access. */
+    if (getuid() != 0 || geteuid() != 0) {
+        fprintf(stderr, "macscan-helper: must be started by launchd as root\n");
+        return 1;
+    }
     char **args = calloc((size_t)argc + 2, sizeof(char *));
     if (!args) return 1;
     args[0] = "/bin/bash";

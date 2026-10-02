@@ -72,7 +72,7 @@ yara_rules(){
   printf 'var %s=["a"];global[_$_5ef4[0x0]]=%s;\n' "_\$_5e""f4" "req""uire" > "$TEST_TMP/loader.txt"
   printf 'const fs = require("fs");\nconsole.log(fs.existsSync("x"));\n' > "$TEST_TMP/clean.js"
   run /opt/homebrew/bin/yara -C "$TEST_TMP/custom.yarc" "$TEST_TMP/loader.txt"
-  [[ "$output" == *"MacTriage_JS_GlobalRequire_Loader"* ]]
+  [[ "$output" == *"MacTriage_JS_GlobalRequire_Loader"* ]] || return 1
   run /opt/homebrew/bin/yara -C "$TEST_TMP/custom.yarc" "$TEST_TMP/clean.js"
   [ -z "$output" ]
 }
@@ -82,7 +82,7 @@ yara_rules(){
   ls /opt/homebrew/var/lib/clamav/*.c[lv]d >/dev/null 2>&1 || skip "ClamAV has no signature database"
   printf '%s%s' 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR' '-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' > "$TEST_TMP/eicar.txt"
   run /opt/homebrew/bin/clamscan --no-summary "$TEST_TMP/eicar.txt"
-  [[ "$output" == *"FOUND"* ]]
+  [[ "$output" == *"FOUND"* ]] || return 1
 }
 
 @test "17 flags a repository git config that can run commands, with file:line" {
@@ -97,7 +97,7 @@ yara_rules(){
   printf '{"runOn":"%s"}\n' "folder""Open" > "$TEST_TMP/elsewhere/tasks.json"
   ln -s "$TEST_TMP/elsewhere/tasks.json" "$UH/proj/.vscode/tasks.json"
   mod 17
-  ! grep -q "Task auto-runs" "$RUN/.flags.raw"
+  not grep -q "Task auto-runs" "$RUN/.flags.raw"
 }
 
 @test "16 flags git settings that run commands, with file:line" {

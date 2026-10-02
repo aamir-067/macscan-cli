@@ -15,7 +15,7 @@ teardown(){ drop_env; }
 @test "--help works without root" {
   run /bin/bash "$SRC/macscan" --help
   [ "$status" -eq 0 ]
-  [[ "$output" == *"SCANNING"* ]]
+  [[ "$output" == *"SCANNING"* ]] || return 1
 }
 
 @test "--set changes a known key" {

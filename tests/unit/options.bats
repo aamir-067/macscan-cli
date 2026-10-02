@@ -39,3 +39,19 @@ setup(){
   options_parse --keep 0
   [ "$KEEP" = 1 ]
 }
+
+@test "single-digit module numbers are padded" {
+  source "$SRC/core/lib/modules.sh"
+  options_parse --only 5,15 --skip 9
+  [ "$ONLY" = "05,15" ] && [ "$SKIP" = "09" ]
+}
+
+@test "module lists with anything but digits and commas are rejected" {
+  run options_parse --only '05;id'
+  [ "$status" -eq 2 ]
+}
+
+@test "unknown tasks and .. in --output are rejected" {
+  run options_parse --task rm; [ "$status" -eq 2 ]
+  run options_parse --output /Users/x/../../etc; [ "$status" -eq 2 ]
+}

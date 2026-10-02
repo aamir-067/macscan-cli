@@ -144,7 +144,7 @@ stop_scan(){
   kill -TERM -- -"$p" 2>/dev/null || kill -TERM "$p" 2>/dev/null
   for i in 1 2 3 4 5 6 7 8 9 10; do [ -z "$(running_pid)" ] && break; sleep 1; done
   [ -n "$(running_pid)" ] && kill -KILL -- -"$p" 2>/dev/null
-  rm -f "$STATE/running.pid"; echo "Scan stopped."
+  rm -f "$STATE/running.pid"; rmdir "$STATE/lock" 2>/dev/null; echo "Scan stopped."
 }
 
 validate(){
@@ -166,7 +166,7 @@ start_job(){
   for a in "$@"; do
     [ "$a" = "--foreground" ] && exec perl -e 'setpgrp(0,0); exec @ARGV' /bin/bash "$ROOT/core/run.sh" "$@"
   done
-  if [ $# -gt 0 ]; then printf '%q ' "$@" > "$STATE/request"; else : > "$STATE/request"; fi
+  if [ $# -gt 0 ]; then printf '%s\0' "$@" > "$STATE/request"; else : > "$STATE/request"; fi
   rm -f "$STATE/current.log"
   launchctl print "system/$RUN_LABEL" >/dev/null 2>&1 || install_services >/dev/null
   launchctl kickstart "system/$RUN_LABEL" >/dev/null 2>&1 || { echo "Could not start the scan service. Try: macscan --foreground"; exit 1; }

@@ -9,7 +9,7 @@ setup_file(){
 }
 
 @test "VERSION is semantic (MAJOR.MINOR.PATCH)" {
-  [[ "$(cat "$REPO/VERSION")" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+  [[ "$(cat "$REPO/VERSION")" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || return 1
 }
 
 @test "installer reports the same version" {
@@ -27,7 +27,7 @@ setup_file(){
   [ "$EUID" -ne 0 ] || skip "running as root"
   run bash "$OUTDIR/install-mac-triage.sh"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"sudo"* ]]
+  [[ "$output" == *"sudo"* ]] || return 1
 }
 
 @test "checksums match the artifacts" {

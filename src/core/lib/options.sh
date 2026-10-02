@@ -42,5 +42,12 @@ options_validate(){
   done
   [ "$KEEP" -ge 1 ] || KEEP=1
   case "$OUTBASE" in /*) ;; *) echo "--output needs a full path"; return 2;; esac
+  case "$OUTBASE" in *"/../"*|*"/..") echo "--output must not contain .."; return 2;; esac
+  case "$ONLY$SKIP" in *[!0-9,]*) echo "--only and --skip take module numbers like 05,15"; return 2;; esac
+  case "$TASK" in scan|check-fda|update-rules|clean) ;; *) echo "Unknown task: $TASK"; return 2;; esac
+  ONLY=$(module_list "$ONLY"); SKIP=$(module_list "$SKIP")
   return 0
 }
+
+# module_list "5,15" -> "05,15" so single-digit module numbers work.
+module_list(){ printf '%s' "$1" | tr ',' '\n' | awk 'NF{printf "%s%02d", (n++ ? "," : ""), $1}'; }

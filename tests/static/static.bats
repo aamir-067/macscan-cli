@@ -60,5 +60,12 @@ scripts(){ echo "$SRC/macscan"; ls "$SRC"/core/*.sh "$SRC"/core/lib/*.sh "$SRC"/
 
 @test "notifications pass text as arguments, not inside AppleScript source" {
   grep -q "on run argv" "$SRC/core/lib/notify.sh"
-  ! grep -q 'display notification \\"\$' "$SRC/core/lib/notify.sh"
+  not grep -q 'display notification \\"\$' "$SRC/core/lib/notify.sh"
+}
+
+@test "tests use assertions that fail under bash 3.2" {
+  # A bare `! cmd` never fails a bats test, and in bash 3.2 a failing `[[ ]]` does not
+  # trigger errexit. Use `not cmd` and `[[ ... ]] || return 1` instead.
+  run grep -nE '^[[:space:]]*! |^[[:space:]]*\[\[ .*\]\][[:space:]]*$|do \[\[ [^|]*\]\]; done' "$REPO"/tests/*/*.bats
+  [ "$status" -eq 1 ] || { echo "$output"; return 1; }
 }

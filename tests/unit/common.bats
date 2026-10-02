@@ -10,21 +10,21 @@ teardown(){ drop_env; }
   is_dev_path /opt/homebrew/bin/node
   is_dev_path "$UH/.nvm/versions/node/v20/bin/node"
   is_dev_path "$UH/code/app/node_modules/.bin/x"
-  ! is_dev_path /Applications/Safari.app/Contents/MacOS/Safari
-  ! is_dev_path "$UH/Downloads/tool"
+  not is_dev_path /Applications/Safari.app/Contents/MacOS/Safari
+  not is_dev_path "$UH/Downloads/tool"
 }
 
 @test "is_system_path accepts sealed system locations only" {
   is_system_path /usr/bin/true
   is_system_path /System/Library/CoreServices/Finder.app
-  ! is_system_path /usr/local/bin/x
-  ! is_system_path /private/tmp/x
+  not is_system_path /usr/local/bin/x
+  not is_system_path /private/tmp/x
 }
 
 @test "is_self matches the tool's own files and labels" {
   is_self "$ROOT/core/run.sh"
   is_self /Library/LaunchDaemons/com.mactriage.runner.plist
-  ! is_self /Library/LaunchDaemons/com.example.plist
+  not is_self /Library/LaunchDaemons/com.example.plist
 }
 
 @test "flag prints a marker and records [module] message" {
@@ -46,14 +46,14 @@ teardown(){ drop_env; }
 
 @test "sig reports a valid Apple signature" {
   run sig /bin/ls
-  [[ "$output" == "/bin/ls | "*"| valid" ]]
+  [[ "$output" == "/bin/ls | "*"| valid" ]] || return 1
 }
 
 @test "sig reports an unsigned binary" {
   cp /usr/bin/true "$TEST_TMP/unsigned"
   codesign --remove-signature "$TEST_TMP/unsigned"
   run sig "$TEST_TMP/unsigned"
-  [[ "$output" == *"UNSIGNED"* || "$output" == *"INVALID-OR-UNSIGNED"* ]]
+  [[ "$output" == *"UNSIGNED"* || "$output" == *"INVALID-OR-UNSIGNED"* ]] || return 1
 }
 
 @test "sha prints the first 16 hex characters of SHA-256" {
@@ -68,7 +68,8 @@ teardown(){ drop_env; }
 
 @test "tmpf creates private files inside MT_TMP" {
   f=$(tmpf)
-  [[ "$f" == "$MT_TMP/"* ]] && [ -f "$f" ]
+  [[ "$f" == "$MT_TMP/"* ]] || return 1
+  [ -f "$f" ]
   [ "$(stat -f %Lp "$f")" = 600 ]
 }
 
@@ -94,7 +95,7 @@ teardown(){ drop_env; }
 
 @test "user_path covers user-writable places and not system ones" {
   user_path "$UH/.zshrc"; user_path /opt/homebrew/etc/gitconfig; user_path /Applications/X.app/Contents/x.json; user_path /private/tmp/x
-  ! user_path /etc/sudoers; ! user_path /var/root/.zshrc; ! user_path /var/db/dslocal/nodes/Default/users/x.plist
+  not user_path /etc/sudoers; not user_path /var/root/.zshrc; not user_path /var/db/dslocal/nodes/Default/users/x.plist
 }
 
 @test "rd reads user files with the user's rights (a planted symlink yields nothing)" {
@@ -102,7 +103,7 @@ teardown(){ drop_env; }
   ln -s "$TEST_TMP/rootonly" "$UH/.npmrc"
   PATH="$REPO/tests/stubs:$PATH" run rd "$UH/.npmrc"
   chmod 600 "$TEST_TMP/rootonly"
-  [[ "$output" != *secret-hash* ]]
+  [[ "$output" != *secret-hash* ]] || return 1
 }
 
 @test "rd prints ordinary files" {
@@ -112,8 +113,8 @@ teardown(){ drop_env; }
 }
 
 @test "paths through the writable data volume are not treated as system paths" {
-  ! is_system_path /System/Volumes/Data/private/tmp/evil
-  ! is_system_path /System/Volumes/Data/Users/x/.hidden/agent
+  not is_system_path /System/Volumes/Data/private/tmp/evil
+  not is_system_path /System/Volumes/Data/Users/x/.hidden/agent
   [ "$(canon_path /System/Volumes/Data/private/tmp/evil)" = /private/tmp/evil ]
   [ "$(canon_path /usr/bin/true)" = /usr/bin/true ]
 }

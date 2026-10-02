@@ -21,7 +21,7 @@ selected(){ local m out=""; for m in "$SRC"/modules/*.sh; do module_selected "$m
 @test "module file names are NN-name.sh with unique numbers" {
   dupes=$(for m in "$SRC"/modules/*.sh; do basename "$m" | cut -c1-2; done | sort | uniq -d)
   [ -z "$dupes" ]
-  for m in "$SRC"/modules/*.sh; do [[ "$(basename "$m")" =~ ^[0-9]{2}-[a-z0-9-]+\.sh$ ]]; done
+  for m in "$SRC"/modules/*.sh; do [[ "$(basename "$m")" =~ ^[0-9]{2}-[a-z0-9-]+\.sh$ ]] || return 1; done
 }
 
 @test "modules never write outside the run folder: no rm, mv, chmod, chown, kill or launchctl changes" {
@@ -41,16 +41,16 @@ selected(){ local m out=""; for m in "$SRC"/modules/*.sh; do module_selected "$m
 
 @test "--quick leaves out the slow modules" {
   QUICK=1
-  for n in 14 18 19 20; do [[ " $(selected) " != *" $n "* ]]; done
-  [[ " $(selected) " == *" 01 "* ]]
+  for n in 14 18 19 20; do [[ " $(selected) " != *" $n "* ]] || return 1; done
+  [[ " $(selected) " == *" 01 "* ]] || return 1
 }
 
 @test "--only and --skip pick modules by number" {
   ONLY="05,15"; [ "$(selected)" = "05 15" ]
-  ONLY=""; SKIP="19,20"; [[ " $(selected) " != *" 19 "* && " $(selected) " != *" 20 "* ]]
+  ONLY=""; SKIP="19,20"; [[ " $(selected) " != *" 19 "* && " $(selected) " != *" 20 "* ]] || return 1
 }
 
 @test "--no-yara, --no-clamav and --no-logs drop their modules" {
   DO_YARA=no; DO_CLAM=no; NO_LOGS=1
-  for n in 18 19 20; do [[ " $(selected) " != *" $n "* ]]; done
+  for n in 18 19 20; do [[ " $(selected) " != *" $n "* ]] || return 1; done
 }

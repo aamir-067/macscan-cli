@@ -13,14 +13,21 @@ YARAC=/opt/homebrew/bin/yarac
 # shellcheck disable=SC2034
 FRESHCLAM=/opt/homebrew/bin/freshclam
 LOG="$STATE/current.log"; PIDF="$STATE/running.pid"; HIST="$STATE/history.log"
-for lib in text options modules auto notify rules report; do
+for lib in text options modules auto notify rules report lock; do
   # shellcheck source=/dev/null
   source "$ROOT/core/lib/$lib.sh"
 done
 
 MODE="manual"; REASON="manual scan"; APPS_NOW=""
 case "${1:-}" in
-  --from-request) shift; if [ -f "$STATE/request" ]; then eval "set -- $(cat "$STATE/request")"; rm -f "$STATE/request"; fi;;
+  --from-request)
+    # NUL-separated arguments written by macscan (never evaluated as shell code).
+    shift; REQ=()
+    if [ -f "$STATE/request" ]; then
+      while IFS= read -r -d '' a; do REQ+=("$a"); done < "$STATE/request"
+      rm -f "$STATE/request"
+    fi
+    set -- "${REQ[@]}";;
   --scheduled) MODE="auto"; shift;;
 esac
 
@@ -58,9 +65,8 @@ if [ "$MODE" = auto ]; then
   if low_battery; then echo "$(date '+%F %T') | auto | postponed (low battery) | $REASON" >> "$HIST"; rm -f "$APPS_NOW"; exit 0; fi
 fi
 
-if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then echo "A scan is already running."; exit 3; fi
-echo $$ > "$PIDF"
-trap 'rm -f "$PIDF"; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
+lock_acquire || { echo "A scan is already running."; exit 3; }
+trap 'lock_release; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
 rm -rf "$STATE/work" "$STATE/tmp"
 MT_TMP="$STATE/tmp"; mkdir -m 700 "$MT_TMP"; export MT_TMP
 trap 'echo; echo "Scan stopped by request."; echo "$(date "+%F %T") | $MODE | stopped | $REASON" >> "$HIST"; exit 130' TERM INT

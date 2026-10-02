@@ -32,6 +32,6 @@ teardown(){ drop_env; }
   printf '[a] x\n[a] x\n[b] y\n' > "$RUN/.flags.raw"; : > "$NEWS"
   VERSION=t MODE=manual REASON=test FDA=yes T0=$(date +%s) NFLAGS=2 ROOT="$SRC"
   run write_summary
-  [[ "$output" == *"RED FLAGS: 2"* ]]
+  [[ "$output" == *"RED FLAGS: 2"* ]] || return 1
   [ "$(grep -c '^\[a\] x$' <<<"$output")" = 1 ]
 }

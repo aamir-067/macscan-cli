@@ -18,26 +18,26 @@ rep(){ printf "%0${2}d" 0 | tr 0 "$1"; }   # rep CHAR N
   for t in "gh""p_$(rep a 36)" "github_""pat_$(rep b 30)" "sk-$(rep c 40)" "AK""IA$(rep D 16)" "AI""za$(rep e 35)" "xox""b-$(rep 1 20)" "npm_$(rep f 36)"; do
     out=$(printf 'token here %s end\n' "$t" | redact)
     [[ "$out" != *"$t"* ]] || { echo "not masked: $t -> $out"; return 1; }
-    [[ "$out" == *"<redacted>"* ]]
+    [[ "$out" == *"<redacted>"* ]] || return 1
   done
 }
 
 @test "JWTs are masked" {
   jwt="ey""J$(rep a 20).$(rep b 20).$(rep c 20)"
   out=$(echo "Authorization header $jwt" | redact)
-  [[ "$out" != *"$jwt"* ]]
+  [[ "$out" != *"$jwt"* ]] || return 1
 }
 
 @test "KEY=value style secrets are masked, the key name is kept" {
   out=$(printf 'export OPENAI_API_KEY=abc123secret\nDB_PASSWORD: hunter2\n' | redact)
-  [[ "$out" == *"OPENAI_API_KEY=<redacted>"* ]]
-  [[ "$out" == *"DB_PASSWORD: <redacted>"* ]]
-  [[ "$out" != *hunter2* && "$out" != *abc123secret* ]]
+  [[ "$out" == *"OPENAI_API_KEY=<redacted>"* ]] || return 1
+  [[ "$out" == *"DB_PASSWORD: <redacted>"* ]] || return 1
+  [[ "$out" != *hunter2* && "$out" != *abc123secret* ]] || return 1
 }
 
 @test "credentials inside URLs are masked" {
   out=$(echo "remote https://user:s3cr3tpass@github.com/x/y.git" | redact)
-  [[ "$out" == *"https://user:<redacted>@github.com/x/y.git"* ]]
+  [[ "$out" == *"https://user:<redacted>@github.com/x/y.git"* ]] || return 1
 }
 
 @test "private key blocks are masked" {
@@ -47,8 +47,8 @@ rep(){ printf "%0${2}d" 0 | tr 0 "$1"; }   # rep CHAR N
 
 @test "bearer tokens, CLI secret flags and JSON secret fields are masked" {
   out=$(printf '%s\n' "curl -H 'Authorization: Bearer abcdefgh12345678' x" "tool --password hunter2 --token=t0k3n --verbose" '{"auth": "dXNlcjpwYXNz", "author": "Jane"}' | redact)
-  [[ "$out" != *abcdefgh12345678* && "$out" != *hunter2* && "$out" != *t0k3n* && "$out" != *dXNlcjpwYXNz* ]]
-  [[ "$out" == *'"author": "Jane"'* ]]
+  [[ "$out" != *abcdefgh12345678* && "$out" != *hunter2* && "$out" != *t0k3n* && "$out" != *dXNlcjpwYXNz* ]] || return 1
+  [[ "$out" == *'"author": "Jane"'* ]] || return 1
 }
 
 @test "webhook URLs are masked" {

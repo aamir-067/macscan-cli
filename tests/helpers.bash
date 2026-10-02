@@ -33,3 +33,6 @@ flags(){ cat "$RUN/.flags.raw"; }
 
 # Snapshot of every file under a tree with size and mtime, for "wrote nothing" checks.
 tree_snapshot(){ find "$1" -print0 2>/dev/null | xargs -0 stat -f '%N %z %m' 2>/dev/null | LC_ALL=C sort; }
+
+# Negative assertion that works on any line (a bare `! cmd` never fails a bats test).
+not(){ if "$@"; then echo "expected to fail: $*"; return 1; fi; return 0; }
