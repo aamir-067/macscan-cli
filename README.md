@@ -67,9 +67,8 @@ Everything else is built into macOS. The tool is plain Bash 3.2 (the `/bin/bash`
 ### From a release (recommended)
 
 ```bash
-VERSION=2.1.0
-curl -fLO "https://github.com/aamir-067/mac-triage/releases/download/v$VERSION/install-mac-triage.sh"
-curl -fLO "https://github.com/aamir-067/mac-triage/releases/download/v$VERSION/SHA256SUMS"
+curl -fLO https://github.com/aamir-067/mac-triage/releases/latest/download/install-mac-triage.sh
+curl -fLO https://github.com/aamir-067/mac-triage/releases/latest/download/SHA256SUMS
 shasum -a 256 -c SHA256SUMS --ignore-missing     # must print: install-mac-triage.sh: OK
 less install-mac-triage.sh                        # it is readable; nothing is encoded
 sudo bash install-mac-triage.sh
