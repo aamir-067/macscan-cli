@@ -32,6 +32,11 @@ AUTOMATIC SCANS
   macscan --log                Watch a running scan
 
 REPORTS
+  macscan --ignore "TEXT" --reason "WHY"
+                               Acknowledge flags containing TEXT: they move to an
+                               "Acknowledged" section and stop counting
+  macscan --ignored            List acknowledged flags
+  macscan --unignore TEXT|N    Stop acknowledging (exact TEXT, or number from --ignored)
   macscan --last               Open the latest full report
   macscan --reports            List saved reports
   macscan --history            Results of past scans
@@ -85,6 +90,36 @@ set_config(){
 }
 
 xml(){ printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
+# Acknowledged flags: "date<TAB>substring<TAB>reason" in a root-only file.
+ACK="$STATE/acknowledged.tsv"
+ack_check_text(){
+  case "$1" in *"$(printf '\t')"*|*[[:cntrl:]]*) echo "$2 must not contain tabs or control characters."; return 1;; esac
+  return 0
+}
+ack_add(){
+  local pat="$1" reason=""
+  [ "${2:-}" = "--reason" ] && reason="${3:-}"
+  if [ -z "$pat" ] || [ -z "$reason" ]; then echo 'Usage: macscan --ignore "<part of the flag text>" --reason "<why it is fine>"'; return 1; fi
+  [ "${#pat}" -ge 8 ] || { echo "Use at least 8 characters of the flag text, so the match stays specific."; return 1; }
+  ack_check_text "$pat" "The flag text" && ack_check_text "$reason" "The reason" || return 1
+  if [ -f "$ACK" ] && awk -F'\t' -v p="$pat" '$2==p{f=1} END{exit !f}' "$ACK"; then echo "Already acknowledged."; return 0; fi
+  printf '%s\t%s\t%s\n' "$(date +%F)" "$pat" "$reason" >> "$ACK"; chmod 600 "$ACK"
+  echo "Acknowledged. Flags containing this text no longer count: $pat"
+}
+ack_list(){
+  [ -s "$ACK" ] || { echo "No acknowledged flags."; return 0; }
+  awk -F'\t' '{ printf "%2d. %s\n    reason: %s (since %s)\n", NR, $2, $3, $1 }' "$ACK" | show
+}
+ack_remove(){
+  local key="${1:-}" tmp
+  [ -n "$key" ] || { echo 'Usage: macscan --unignore "<exact text>" | N (see macscan --ignored)'; return 1; }
+  [ -s "$ACK" ] || { echo "No acknowledged flags."; return 1; }
+  tmp="$ACK.new"
+  awk -F'\t' -v k="$key" '!(k ~ /^[0-9]+$/ ? NR == k+0 : $2 == k)' "$ACK" > "$tmp"
+  if cmp -s "$ACK" "$tmp"; then rm -f "$tmp"; echo "Not found. See macscan --ignored"; return 1; fi
+  mv "$tmp" "$ACK"; chmod 600 "$ACK"; echo "Removed."
+}
+
 helper_args(){
   if [ -x "$ROOT/bin/macscan-helper" ]; then printf '<string>%s</string>' "$(xml "$ROOT/bin/macscan-helper")"
   else printf '<string>/bin/bash</string><string>%s</string>' "$(xml "$ROOT/core/run.sh")"; fi
@@ -222,6 +257,9 @@ case "${1:-}" in
   --modules) list_modules;;
   --config) grep -v '^#' "$ROOT/config";;
   --set) set_config "${2:-}";;
+  --ignore) ack_add "${2:-}" "${3:-}" "${4:-}";;
+  --ignored) ack_list;;
+  --unignore) ack_remove "${2:-}";;
   --install-services) install_services;;
   --uninstall) uninstall;;
   *) start_job "$@";;

@@ -100,7 +100,9 @@ low	Could not locate any privacy (TCC) database'
 # Inventory categories whose new items are high severity; other new items are medium.
 SEVERITY_NEW_HIGH=' launch jobs btm kext sysext authplugin sudoers pam profiles cron users admins remote certs native_hosts browser_policy hooks mcp '
 
-# classify_flags <flags file>: prints "rank<TAB>severity<TAB>flag line" for each line.
+# classify_flags <flags file> [acknowledged file]
+# Prints "rank<TAB>severity<TAB>acknowledged 0|1<TAB>ack note<TAB>flag line" per line.
+# The acknowledged file has "date<TAB>substring<TAB>reason" lines (macscan --ignore).
 classify_flags(){
   # BSD awk refuses newlines in -v values, so the rules travel in the environment.
   MT_SEV_RULES="$SEVERITY_RULES" MT_SEV_NEW="$SEVERITY_NEW_HIGH" awk -F'\t' '
@@ -109,7 +111,9 @@ classify_flags(){
       n = split(rules, r, "\n")
       for (i = 1; i <= n; i++) { split(r[i], p, "\t"); sev[i] = p[1]; pre[i] = p[2] }
       rank["critical"] = 1; rank["high"] = 2; rank["medium"] = 3; rank["low"] = 4
+      na = 0
     }
+    FILENAME == ackfile { if (NF >= 3 && $2 != "") { na++; apat[na] = $2; anote[na] = $3 " (since " $1 ")" } next }
     NF == 0 { next }
     {
       line = $0; s = ""
@@ -121,6 +125,8 @@ classify_flags(){
         for (i = 1; i <= n; i++) if (index(msg, pre[i]) == 1) { s = sev[i]; break }
         if (s == "") s = "medium"
       }
-      printf "%d\t%s\t%s\n", rank[s], s, line
-    }' "$1"
+      ack = 0; note = ""
+      for (i = 1; i <= na; i++) if (index(line, apat[i])) { ack = 1; note = anote[i]; break }
+      printf "%d\t%s\t%d\t%s\t%s\n", rank[s], s, ack, note, line
+    }' ackfile="${2:-/dev/null}" "${2:-/dev/null}" "$1"
 }

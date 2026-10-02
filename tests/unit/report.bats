@@ -40,3 +40,15 @@ teardown(){ drop_env; }
   [ "$(grep '^\[' <<<"$output" | head -1)" = "[CRITICAL] [17-code-repos] Injected malware marker found: /p.js" ]
   [ "$(grep '^\[' <<<"$output" | tail -1)" = "[LOW] [09-network] Listener reachable from the network: a" ]
 }
+
+@test "acknowledged flags are listed separately and not counted" {
+  source "$SRC/core/lib/severity.sh"; source "$SRC/core/common.sh"
+  printf '[a] keep me\n[b] ignore me please\n' > "$RUN/.flags.raw"; : > "$NEWS"
+  printf '2026-10-01\tignore me please\tknown\n' > "$STATE/acknowledged.tsv"
+  VERSION=t MODE=manual REASON=test FDA=yes T0=$(date +%s) ROOT="$SRC"
+  prepare_flags
+  [ "$NFLAGS" = 1 ] && [ "$N_ACK" = 1 ]
+  run write_summary
+  [[ "$output" == *"ACKNOWLEDGED (not counted): 1"* ]] || return 1
+  [[ "$output" == *"acknowledged: known (since 2026-10-01)"* ]] || return 1
+}

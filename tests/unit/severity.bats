@@ -26,7 +26,7 @@ sev_of(){ printf '%s\n' "$1" > "$TEST_TMP/f"; classify_flags "$TEST_TMP/f" | cut
 
 @test "the flag line itself is unchanged" {
   printf '%s\n' '[05-persistence-launchd] Hidden launch item file: /Library/LaunchAgents/.x' > "$TEST_TMP/f"
-  [ "$(classify_flags "$TEST_TMP/f" | cut -f3)" = '[05-persistence-launchd] Hidden launch item file: /Library/LaunchAgents/.x' ]
+  [ "$(classify_flags "$TEST_TMP/f" | cut -f5)" = '[05-persistence-launchd] Hidden launch item file: /Library/LaunchAgents/.x' ]
 }
 
 @test "every flag message in the modules has an explicit rule" {
@@ -37,4 +37,12 @@ sev_of(){ printf '%s\n' "$1" > "$TEST_TMP/f"; classify_flags "$TEST_TMP/f" | cut
 $p"
   done < <(grep -ho 'flag "[^"$]*' "$SRC"/modules/*.sh "$SRC"/core/*.sh | sed 's/^flag "//' | sort -u)
   [ -z "$missing" ] || { echo "no severity rule for:$missing"; return 1; }
+}
+
+@test "acknowledged substrings mark matching flags with their reason" {
+  printf '%s\n' '[10-privacy-tcc] Permission belongs to an app no longer on disk: com.old.app' '[05-x] Hidden launch item file: /x' > "$TEST_TMP/f"
+  printf '2026-10-01\tno longer on disk: com.old.app\tUninstalled long ago\n' > "$TEST_TMP/ack"
+  out=$(classify_flags "$TEST_TMP/f" "$TEST_TMP/ack")
+  [ "$(echo "$out" | awk -F'\t' '$3==1' | cut -f4)" = "Uninstalled long ago (since 2026-10-01)" ]
+  [ "$(echo "$out" | awk -F'\t' '$3==0' | cut -f5)" = "[05-x] Hidden launch item file: /x" ]
 }

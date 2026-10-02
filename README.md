@@ -133,7 +133,21 @@ Reports are saved in `~/Documents/mac-triage-reports/scan_<date>_<mode>/` (plus 
 
 A flag line looks like `[05-persistence-launchd] Launch item runs from an unusual location: <plist> -> <target>`. Secrets that appear in configs or command lines (API keys, tokens, passwords, private keys, URL credentials) are masked before anything is written.
 
+Each flag has a severity (critical, high, medium, low). The summary counts them and lists the most severe first, for example `[HIGH] [07-shell-and-path] Suspicious command in ...`.
+
 The newest 4 reports are kept, and anything older than 30 days is removed (the newest is always kept).
+
+### Acknowledging flags you have checked
+
+Some flags are expected on your Mac (a tool you installed on purpose, a permission left behind by an app you removed). Once you have verified one, acknowledge it so it stops counting:
+
+```bash
+macscan --ignore "no longer on disk: com.example.oldapp" --reason "Uninstalled in 2025, checked"
+macscan --ignored                 # list, with dates and reasons
+macscan --unignore 1              # stop acknowledging (by number or exact text)
+```
+
+Matching is by substring of the flag text, so be specific. Acknowledged flags still appear in the report, in an **Acknowledged** section with your reason, so nothing is hidden. Re-check them from time to time.
 
 ## Configuration
 

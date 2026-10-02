@@ -59,3 +59,23 @@ teardown(){ drop_env; }
 @test "xml escapes characters that would break a property list" {
   [ "$(xml '/Users/a&b/<x>')" = '/Users/a&amp;b/&lt;x&gt;' ]
 }
+
+@test "--ignore stores text, reason and date; --unignore removes it" {
+  ACK="$STATE/acknowledged.tsv"
+  run ack_add "no longer on disk: com.old.app" --reason "Uninstalled"
+  [ "$status" -eq 0 ]
+  [ "$(cut -f2,3 "$ACK")" = "$(printf 'no longer on disk: com.old.app\tUninstalled')" ]
+  run ack_add "no longer on disk: com.old.app" --reason "again"
+  [ "$(grep -c . "$ACK")" = 1 ]
+  run ack_remove 1
+  [ ! -s "$ACK" ]
+}
+
+@test "--ignore rejects short, reason-less or control-character input" {
+  ACK="$STATE/acknowledged.tsv"
+  run ack_add "short" --reason "x"; [ "$status" -eq 1 ]
+  run ack_add "long enough text"; [ "$status" -eq 1 ]
+  run ack_add "$(printf 'bad\ttab text')" --reason "x"; [ "$status" -eq 1 ]
+  run ack_add "escape text here" --reason "$(printf 'r\033[2J')"; [ "$status" -eq 1 ]
+  [ ! -s "$ACK" ]
+}
