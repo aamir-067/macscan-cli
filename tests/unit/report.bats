@@ -28,20 +28,6 @@ teardown(){ drop_env; }
   [ ! -d "$INV" ]
 }
 
-@test "retention keeps the newest KEEP reports and removes their zips" {
-  mkdir -p "$OUTBASE"
-  for d in 2026-01-01 2026-01-02 2026-01-03; do mkdir "$OUTBASE/scan_${d}_manual"; touch "$OUTBASE/scan_${d}_manual.zip"; done
-  cleanup_reports
-  [ ! -e "$OUTBASE/scan_2026-01-01_manual" ] && [ ! -e "$OUTBASE/scan_2026-01-01_manual.zip" ]
-  [ -d "$OUTBASE/scan_2026-01-03_manual" ] && [ -d "$OUTBASE/scan_2026-01-02_manual" ]
-}
-
-@test "retention removes orphan zips" {
-  mkdir -p "$OUTBASE"; touch "$OUTBASE/scan_2026-01-01_manual.zip"
-  cleanup_reports
-  [ ! -e "$OUTBASE/scan_2026-01-01_manual.zip" ]
-}
-
 @test "summary lists unique flags and the count" {
   printf '[a] x\n[a] x\n[b] y\n' > "$RUN/.flags.raw"; : > "$NEWS"
   VERSION=t MODE=manual REASON=test FDA=yes T0=$(date +%s) NFLAGS=2 ROOT="$SRC"

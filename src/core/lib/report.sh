@@ -1,19 +1,16 @@
 # shellcheck shell=bash
 # Report assembly: inventory diff, summary, full report, retention.
 
-cleanup_reports(){
-  [ -d "$OUTBASE" ] || return 0
-  local all newest n
-  all=$(find "$OUTBASE" -maxdepth 1 -type d -name 'scan_*' | sort)
-  newest=$(echo "$all" | tail -1)
-  echo "$all" | while IFS= read -r d; do
-    if [ -n "$d" ] && [ "$d" != "$newest" ] && [ -n "$(find "$d" -maxdepth 0 -mtime +"$MAX_AGE_DAYS")" ]; then rm -rf "$d" "$d.zip"; fi
-  done
-  all=$(find "$OUTBASE" -maxdepth 1 -type d -name 'scan_*' | sort); n=$(echo "$all" | grep -c . || true)
-  if [ "$n" -gt "$KEEP" ]; then echo "$all" | head -n $((n-KEEP)) | while IFS= read -r d; do rm -rf "$d" "$d.zip"; done; fi
-  for z in "$OUTBASE"/scan_*.zip; do if [ -f "$z" ] && [ ! -d "${z%.zip}" ]; then rm -f "$z"; fi; done
-  return 0
+# Everything that writes into the user's report folder runs as the user
+# (core/deliver.sh), never as root. See the comment at the top of deliver.sh.
+as_target_user(){ sudo -u "$U" -H "$@"; }
+
+# deliver_report: streams the staged report $WORK/$NAME to the user's report folder.
+deliver_report(){
+  (cd "$WORK" && tar -cf - "$NAME") | as_target_user /bin/bash "$ROOT/core/deliver.sh" receive "$OUTBASE" "$NAME" "$DO_ZIP"
 }
+
+cleanup_reports(){ as_target_user /bin/bash "$ROOT/core/deliver.sh" clean "$OUTBASE" "$KEEP" "$MAX_AGE_DAYS"; }
 
 # diff_inventories: compares $INV/*.txt with the last scan's copy in $STATE/inv/last,
 # writes the human summary to $NEWS and "new since last scan" flags to $RUN/.flags.raw.

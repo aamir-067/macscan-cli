@@ -30,3 +30,9 @@ scripts(){ echo "$SRC/macscan"; ls "$SRC"/core/*.sh "$SRC"/core/lib/*.sh "$SRC"/
   [ -x /opt/homebrew/bin/yarac ] || skip "YARA is not installed"
   /opt/homebrew/bin/yarac -w "$SRC/rules/custom.yar" "$BATS_TEST_TMPDIR/r.yarc"
 }
+
+@test "the root engine never writes into the user's report folder itself" {
+  # Only core/deliver.sh (run as the user) may create, zip, chown or delete reports.
+  run grep -nE 'chown (-R )?"\$U" "\$(RUN|OUTBASE)|ditto -c|rm -rf "\$d"|> *"\$OUTBASE|mkdir -p "\$OUTBASE' "$SRC/core/run.sh" "$SRC"/core/lib/*.sh "$SRC/core/common.sh"
+  [ "$status" -eq 1 ] || { echo "$output"; return 1; }
+}

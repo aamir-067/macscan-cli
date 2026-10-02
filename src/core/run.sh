@@ -59,7 +59,8 @@ fi
 
 if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then echo "A scan is already running."; exit 3; fi
 echo $$ > "$PIDF"
-trap 'rm -f "$PIDF"' EXIT
+trap 'rm -f "$PIDF"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
+rm -rf "$STATE/work"
 trap 'echo; echo "Scan stopped by request."; echo "$(date "+%F %T") | $MODE | stopped | $REASON" >> "$HIST"; exit 130' TERM INT
 exec > >(tee "$LOG") 2>&1
 echo "@@START@@ $(date)"
@@ -74,15 +75,15 @@ if [ "$TASK" = check-fda ]; then
 fi
 
 STAMP=$(date +%Y-%m-%d_%H-%M-%S)
-[ -L "$OUTBASE" ] && { echo "The report folder is a symlink. Refusing to write there."; exit 4; }
-mkdir -p "$OUTBASE" && chown "$U" "$OUTBASE"
-RUN="$OUTBASE/scan_${STAMP}_${MODE}"; mkdir -p "$RUN/modules"; export RUN
+# The report is built in a root-only staging folder and handed to the user at the end.
+NAME="scan_${STAMP}_${MODE}"; WORK="$STATE/work"; mkdir -p "$WORK"; chmod 700 "$WORK"
+RUN="$WORK/$NAME"; rm -rf "$RUN"; mkdir -p "$RUN/modules"; export RUN
 INV="$STATE/inv/new_$STAMP"; mkdir -p "$INV"; export INV
 : > "$RUN/.flags.raw"
 T0=$(date +%s)
 echo "mac-triage $VERSION | $MODE | $REASON"
 echo "User: $U | look-back: $DAYS days | Full Disk Access: $FDA"
-echo "Output: $RUN"
+echo "Output: $OUTBASE/$NAME"
 [ "$FDA" = no ] && { MODULE=core flag "Scanner had no Full Disk Access, some areas could not be read"; }
 if [ "$QUICK" = 0 ]; then
   [ "$DO_YARA" = yes ] && update_rules
@@ -110,11 +111,13 @@ rm -f "$RUN/.flags.raw" "$NEWS"
 REPORT="$RUN/FULL-REPORT_${STAMP}.txt"
 { cat "$SUM"; for f in "$RUN"/modules/*.txt; do echo; echo; cat "$f"; done; } > "$REPORT"
 
-if [ "$OIF" = yes ] && [ "$NFLAGS" -eq 0 ]; then rm -rf "$RUN"; RESULT="clean, report not kept"
+if [ "$OIF" = yes ] && [ "$NFLAGS" -eq 0 ]; then RESULT="clean, report not kept"; REPORT=""
+elif deliver_report; then RESULT="report: $OUTBASE/$NAME"; REPORT="$OUTBASE/$NAME/$(basename "$REPORT")"
 else
-  [ "$DO_ZIP" = yes ] && ( cd "$OUTBASE" && ditto -c -k --keepParent "$(basename "$RUN")" "$RUN.zip" ) && chown "$U" "$RUN.zip"
-  chown -R "$U" "$RUN"; RESULT="report: $RUN"
+  mkdir -p "$STATE/undelivered"; rm -rf "${STATE:?}/undelivered/$NAME"; mv "$RUN" "$STATE/undelivered/$NAME"
+  RESULT="report could not be saved in $OUTBASE. It is kept (root only) in $STATE/undelivered/$NAME"; REPORT=""
 fi
+rm -rf "$RUN"
 cleanup_reports
 [ "$QUICK" = 0 ] && [ -z "$ONLY$SKIP" ] && date +%s > "$STATE/last-full-scan"
 [ "$MODE" = auto ] && [ -n "$APPS_NOW" ] && { cp "$APPS_NOW" "$STATE/apps.list"; rm -f "$APPS_NOW"; }
@@ -123,5 +126,5 @@ echo "$(date '+%F %T') | $MODE | $REASON | flags: $NFLAGS | $MINS min | $RESULT"
 echo; echo "Finished in $MINS minutes. Red flags: $NFLAGS"; echo "$RESULT"
 if [ "$NFLAGS" -gt 0 ]; then notify "Mac scan: $NFLAGS red flags" "Report saved in $(basename "$OUTBASE")"
 else notify "Mac scan complete" "No red flags found."; fi
-[ "$OPEN" = 1 ] && [ -f "$REPORT" ] && launchctl asuser "$UID_N" sudo -u "$U" /usr/bin/open "$REPORT"
+[ "$OPEN" = 1 ] && [ -n "$REPORT" ] && launchctl asuser "$UID_N" sudo -u "$U" /usr/bin/open "$REPORT"
 echo "@@DONE@@"
