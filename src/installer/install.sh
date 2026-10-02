@@ -124,6 +124,10 @@ find "$ROOT" -path "$ROOT/state" -prune -o -type f -exec chmod 644 {} +
 chmod 755 "$ROOT/macscan" "$ROOT/core/run.sh" "$ROOT"/modules/*.sh
 [ -f "$ROOT/bin/macscan-helper" ] && chmod 755 "$ROOT/bin/macscan-helper"
 chmod -R go-rwx "$ROOT/state"
+# Record what was installed, so every scan can tell if a shipped file changed.
+# shellcheck source=../core/lib/integrity.sh
+source "$ROOT/core/lib/integrity.sh"
+integrity_manifest "$ROOT" > "$ROOT/manifest.sha256"; chown root:wheel "$ROOT/manifest.sha256"; chmod 644 "$ROOT/manifest.sha256"
 mkdir -p /usr/local/bin && ln -sf "$ROOT/macscan" /usr/local/bin/macscan
 
 BREW=/opt/homebrew/bin/brew

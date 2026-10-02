@@ -173,7 +173,7 @@ Matching is by substring of the flag text, so be specific. Acknowledged flags st
 
 A scanner that runs as root on a schedule is itself a target. The design assumes that anything running as your user (the malware this tool looks for) may try to abuse it.
 
-- **Root-owned code.** Everything lives in `/usr/local/mac-triage`, owned by root and writable only by root. The installer refuses to install if any folder on that path is not.
+- **Root-owned code, checked every scan.** Everything lives in `/usr/local/mac-triage`, owned by root and writable only by root. The installer refuses to install if any folder on that path is not, and records a SHA-256 manifest. Every scan (and `macscan --verify`) checks that manifest, looks for unexpected files, and checks ownership of the install folder and the LaunchDaemons; any problem is a critical flag.
 - **Root never writes where you can.** Reports are built in a root-only folder and handed to your report folder by a small script that runs as you, so a planted symlink can only redirect writes to places you could already write. Temp files live in a root-only folder, never in the shared `/tmp`.
 - **Root never runs your code.** Homebrew tools (YARA, ClamAV, freshclam) and all downloads run as your user. Root uses only system binaries with a fixed `PATH`, a clean environment and `HOME=/var/root`.
 - **Your files are read with your rights.** Shell configs, git and SSH configs and similar files in your home are read as you, so a symlink there cannot make root copy a protected file into a report.

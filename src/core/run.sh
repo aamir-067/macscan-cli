@@ -13,7 +13,7 @@ YARAC=/opt/homebrew/bin/yarac
 # shellcheck disable=SC2034
 FRESHCLAM=/opt/homebrew/bin/freshclam
 LOG="$STATE/current.log"; PIDF="$STATE/running.pid"; HIST="$STATE/history.log"
-for lib in text options modules auto notify rules report lock severity; do
+for lib in text options modules auto notify rules report lock severity integrity; do
   # shellcheck source=/dev/null
   source "$ROOT/core/lib/$lib.sh"
 done
@@ -46,6 +46,11 @@ source "$ROOT/core/common.sh"
 
 if [ "$TASK" = update-rules ]; then update_rules force; update_clam force; exit 0; fi
 if [ "$TASK" = clean ]; then cleanup_reports; echo "Report cleanup done."; exit 0; fi
+if [ "$TASK" = verify ]; then
+  MODULE=core
+  if integrity_check root /Library/LaunchDaemons; then echo "Install integrity: ok ($(grep -c . "$ROOT/manifest.sha256") files match the manifest)"; exit 0; fi
+  echo "Install integrity: PROBLEMS FOUND (see above). Reinstall from a trusted copy and investigate."; exit 1
+fi
 
 if [ "$MODE" = auto ]; then
   [ "$AUTO" = on ] || exit 0
@@ -94,6 +99,7 @@ echo "mac-triage $VERSION | $MODE | $REASON"
 echo "User: $U | look-back: $DAYS days | Full Disk Access: $FDA"
 echo "Output: $OUTBASE/$NAME"
 [ "$FDA" = no ] && { MODULE=core flag "Scanner had no Full Disk Access, some areas could not be read"; }
+if MODULE=core integrity_check root /Library/LaunchDaemons >/dev/null; then echo "Install integrity: ok"; else echo "Install integrity: PROBLEMS FOUND (critical flags raised)"; fi
 if [ "$QUICK" = 0 ]; then
   [ "$DO_YARA" = yes ] && update_rules
   [ "$DO_CLAM" = yes ] && update_clam

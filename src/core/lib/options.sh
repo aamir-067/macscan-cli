@@ -44,7 +44,7 @@ options_validate(){
   case "$OUTBASE" in /*) ;; *) echo "--output needs a full path"; return 2;; esac
   case "$OUTBASE" in *"/../"*|*"/..") echo "--output must not contain .."; return 2;; esac
   case "$ONLY$SKIP" in *[!0-9,]*) echo "--only and --skip take module numbers like 05,15"; return 2;; esac
-  case "$TASK" in scan|check-fda|update-rules|clean) ;; *) echo "Unknown task: $TASK"; return 2;; esac
+  case "$TASK" in scan|check-fda|update-rules|clean|verify) ;; *) echo "Unknown task: $TASK"; return 2;; esac
   ONLY=$(module_list "$ONLY"); SKIP=$(module_list "$SKIP")
   return 0
 }

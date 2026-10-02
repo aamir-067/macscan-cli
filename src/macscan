@@ -45,6 +45,7 @@ REPORTS
 MAINTENANCE
   macscan --update-rules       Update YARA rules and ClamAV signatures now
   macscan --check-fda          Check the scanner has Full Disk Access
+  macscan --verify             Check the installed files against the install manifest
   macscan --modules            List scan modules
   macscan --config             Show settings
   macscan --set KEY=VALUE      Change a setting, e.g. KEEP_REPORTS=3 or AUTO_INTERVAL_DAYS=14
@@ -254,6 +255,7 @@ case "${1:-}" in
   --clean) /bin/bash "$ROOT/core/run.sh" --task clean;;
   --update-rules) /bin/bash "$ROOT/core/run.sh" --task update-rules;;
   --check-fda) start_job --task check-fda;;
+  --verify) /bin/bash "$ROOT/core/run.sh" --task verify;;
   --modules) list_modules;;
   --config) grep -v '^#' "$ROOT/config";;
   --set) set_config "${2:-}";;

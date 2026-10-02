@@ -9,7 +9,7 @@ AS="$UH/Library/Application Support"
 
 section(){ echo; echo "==================== $* ===================="; }
 sub(){ echo; echo "--- $*"; }
-flag(){ echo "[!] $*"; echo "[$MODULE] $*" >> "$RUN/.flags.raw"; }
+flag(){ echo "[!] $*"; [ -z "$RUN" ] || echo "[$MODULE] $*" >> "$RUN/.flags.raw"; }
 inv(){ local c="$1"; shift; [ -n "$INV" ] || return 0; printf '%s\n' "$*" >> "$INV/$c.txt"; }
 asuser(){ launchctl asuser "$UID_N" sudo -H -u "$U" "$@"; }
 tmo(){ local t="$1"; shift; perl -e 'alarm shift; exec @ARGV' "$t" "$@"; }

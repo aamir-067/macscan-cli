@@ -16,6 +16,7 @@ The repository's `src/` folder mirrors this layout. `scripts/build.sh` turns it 
 | `modules/NN-name.sh` | One area each, run in order. Output passes through `redact` into the report. |
 | `rules/custom.yar`, `rules/all.yarc`, `rules/sets.txt` | Custom YARA rules; compiled bundle (custom + YARA Forge core + Elastic macOS/multi), compiled as the user. |
 | `VERSION`, `config` | Version string; `KEY="VALUE"` settings changed with `macscan --set`. |
+| `manifest.sha256` | Written by the installer; checked by `core/lib/integrity.sh` at the start of every scan and by `macscan --verify`. |
 | `state/` (root only, 700) | `lock/`, `running.pid`, `request`, `current.log`, `service.log`, `history.log`, `last-full-scan`, `apps.list`, `rules-updated`, `clam-updated`, `fda-status`, `inv/last/*.txt`, `work/` (report staging), `tmp/` (per-scan temp), `undelivered/`. |
 
 ## LaunchDaemons
