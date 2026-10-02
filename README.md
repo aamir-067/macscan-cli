@@ -49,6 +49,7 @@
 | 21 | Plaintext secrets | Password-manager exports, private keys and stray `.env` files in Downloads, Desktop and Documents (paths only, never contents) |
 | 22 | Supply chain (opt-in) | Known-vulnerable dependencies with `osv-scanner` (offline database) and committed secrets with `gitleaks` (redacted), across your repositories, run as you |
 | 23 | osquery cross-check | When [osquery](https://osquery.io) is installed (root-owned), repeats launchd, startup items, listeners, system extensions and browser extensions from an independent source |
+| 24 | Exec monitoring (opt-in) | Records every program started while the scan runs with the built-in `eslogger`, so short-lived programs between snapshots are seen; flags ones from temp, hidden or Downloads folders and unsigned ones |
 
 New browsers, editors and AI tools are discovered by their folder structure, so they are covered without a code change. Every scan keeps a stable inventory (apps, launch items, extensions, MCP servers, hooks, permissions, and more) and reports anything **new since the last scan**, which is the most useful early-warning signal.
 
@@ -172,6 +173,7 @@ Matching is by substring of the flag text, so be specific. Acknowledged flags st
 | `YARA` / `CLAMAV` | `yes` | Run the YARA and ClamAV modules |
 | `CLAMAV_SCOPE` | `standard` | `standard` (user folders and launch locations) or `full` (whole home folder, slow) |
 | `SUPPLY_CHAIN` | `no` | Run module 22 (needs `brew install osv-scanner gitleaks`; slow on many repositories) |
+| `EXEC_MONITOR` | `no` | Run `eslogger` during full scans and report programs that started (module 24). Experimental |
 | `INCLUDE_TRASH` | `no` | Also sweep the Trash with the file-system, YARA and ClamAV modules (`--include-trash` for one scan) |
 
 ## How it stays safe

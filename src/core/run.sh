@@ -15,7 +15,7 @@ YARAC=/opt/homebrew/bin/yarac
 # shellcheck disable=SC2034
 FRESHCLAM=/opt/homebrew/bin/freshclam
 LOG="$STATE/current.log"; PIDF="$STATE/running.pid"; HIST="$STATE/history.log"
-for lib in text options modules auto notify rules report lock severity integrity; do
+for lib in text options modules auto notify rules report lock severity integrity execmon; do
   # shellcheck source=/dev/null
   source "$ROOT/core/lib/$lib.sh"
 done
@@ -41,7 +41,7 @@ UID_N="$(id -u "$U" 2>/dev/null)"; export UID_N
 [ -n "$UID_N" ] || { echo "User $U not found."; exit 1; }
 UH="$(dscl . -read "/Users/$U" NFSHomeDirectory 2>/dev/null | sed -n 's/^NFSHomeDirectory: //p' | head -1)"; export UH
 [ -d "$UH" ] || { echo "Home folder of $U not found."; exit 1; }
-export DAYS QUICK CLAM_SCOPE OUTBASE ROOT STATE INCLUDE_TRASH SUPPLY_CHAIN
+export DAYS QUICK CLAM_SCOPE OUTBASE ROOT STATE INCLUDE_TRASH SUPPLY_CHAIN EXEC_MONITOR
 export RUN="" INV=""
 # shellcheck source=common.sh
 source "$ROOT/core/common.sh"
@@ -74,7 +74,7 @@ if [ "$MODE" = auto ]; then
 fi
 
 lock_acquire || { echo "A scan is already running."; exit 3; }
-trap 'lock_release; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
+trap 'execmon_stop; lock_release; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
 rm -rf "$STATE/work" "$STATE/tmp"
 MT_TMP="$STATE/tmp"; mkdir -m 700 "$MT_TMP"; export MT_TMP
 trap 'echo; echo "Scan stopped by request."; echo "$(date "+%F %T") | $MODE | stopped | $REASON" >> "$HIST"; exit 130' TERM INT
@@ -108,6 +108,7 @@ if [ "$QUICK" = 0 ]; then
 fi
 echo
 
+execmon_start
 MODS=("$ROOT"/modules/*.sh); TOTAL=${#MODS[@]}; i=0
 for m in "${MODS[@]}"; do
   i=$((i+1)); name=$(basename "$m" .sh)
@@ -118,6 +119,7 @@ for m in "${MODS[@]}"; do
   echo "done in $(( $(date +%s) - t ))s"
 done
 
+execmon_stop
 NEWS="$RUN/.news"
 diff_inventories
 
