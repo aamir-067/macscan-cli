@@ -13,7 +13,7 @@ YARAC=/opt/homebrew/bin/yarac
 # shellcheck disable=SC2034
 FRESHCLAM=/opt/homebrew/bin/freshclam
 LOG="$STATE/current.log"; PIDF="$STATE/running.pid"; HIST="$STATE/history.log"
-for lib in options modules auto notify rules report; do
+for lib in text options modules auto notify rules report; do
   # shellcheck source=/dev/null
   source "$ROOT/core/lib/$lib.sh"
 done
@@ -47,7 +47,7 @@ if [ "$MODE" = auto ]; then
   SHOULD=0
   if [ "$AUTO_ON_NEW_APP" = yes ] && [ -n "$(comm -13 "$STATE/apps.list" "$APPS_NOW")" ]; then
     sleep 120; app_list > "$APPS_NOW"
-    ADDED=$(comm -13 "$STATE/apps.list" "$APPS_NOW" | sed 's#.*/##' | tr '\n' ' ')
+    ADDED=$(comm -13 "$STATE/apps.list" "$APPS_NOW" | sed 's#.*/##' | one_line | cut -c1-300)
     [ -n "$ADDED" ] && { SHOULD=1; REASON="new app installed: $ADDED"; }
   fi
   LASTFULL=$(cat "$STATE/last-full-scan" 2>/dev/null || echo 0)
@@ -124,7 +124,7 @@ cleanup_reports
 [ "$QUICK" = 0 ] && [ -z "$ONLY$SKIP" ] && date +%s > "$STATE/last-full-scan"
 [ "$MODE" = auto ] && [ -n "$APPS_NOW" ] && { cp "$APPS_NOW" "$STATE/apps.list"; rm -f "$APPS_NOW"; }
 MINS=$(( ($(date +%s)-T0)/60 ))
-echo "$(date '+%F %T') | $MODE | $REASON | flags: $NFLAGS | $MINS min | $RESULT" >> "$HIST"
+echo "$(date '+%F %T') | $MODE | $REASON | flags: $NFLAGS | $MINS min | $RESULT" | one_line >> "$HIST"; echo >> "$HIST"
 echo; echo "Finished in $MINS minutes. Red flags: $NFLAGS"; echo "$RESULT"
 if [ "$NFLAGS" -gt 0 ]; then notify "Mac scan: $NFLAGS red flags" "Report saved in $(basename "$OUTBASE")"
 else notify "Mac scan complete" "No red flags found."; fi

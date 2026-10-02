@@ -49,6 +49,9 @@ USAGE
 }
 
 
+# Log and history text can contain names chosen by an attacker; never print it raw.
+show(){ /bin/bash -c 'source "$1/core/lib/text.sh"; sanitize' _ "$ROOT"; }
+
 running_pid(){ local p; p=$(cat "$STATE/running.pid" 2>/dev/null); [ -n "$p" ] && kill -0 "$p" 2>/dev/null && echo "$p"; }
 fmt_ts(){ if [ "${1:-0}" -gt 0 ] 2>/dev/null; then date -r "$1" '+%F %H:%M'; else echo "never"; fi; }
 
@@ -127,7 +130,7 @@ status(){
   else echo "Automatic scans:  OFF"; fi
   p=$(running_pid)
   if [ -n "$p" ]; then echo "Running now:      yes (pid $p). Use macscan --log or macscan --stop"; else echo "Running now:      no"; fi
-  echo "Last scan:        $(tail -1 "$STATE/history.log" 2>/dev/null || echo never)"
+  echo "Last scan:        $(tail -1 "$STATE/history.log" 2>/dev/null | show || echo never)"
   echo "Last full scan:   $(fmt_ts "$(cat "$STATE/last-full-scan" 2>/dev/null)")"
   echo "Reports:          $REPORT_DIR ($(find "$REPORT_DIR" -maxdepth 1 -type d -name 'scan_*' 2>/dev/null | wc -l | tr -d ' ') kept, max $KEEP_REPORTS, max age $MAX_AGE_DAYS days)"
   echo "Full Disk Access: $(cat "$STATE/fda-status" 2>/dev/null || echo 'unknown, run: macscan --check-fda')"
@@ -204,13 +207,13 @@ case "${1:-}" in
   --status) status;;
   --stop) stop_scan;;
   --auto) case "${2:-}" in on) auto_on;; off) auto_off;; *) echo "Usage: macscan --auto on|off";; esac;;
-  --log) if [ -n "$(running_pid)" ]; then follow; else echo "No scan is running. End of the last log:"; tail -40 "$STATE/current.log" 2>/dev/null; fi;;
+  --log) if [ -n "$(running_pid)" ]; then follow; else echo "No scan is running. End of the last log:"; tail -40 "$STATE/current.log" 2>/dev/null | show; fi;;
   --last)
     d=$(find "$REPORT_DIR" -maxdepth 1 -type d -name 'scan_*' 2>/dev/null | sort | tail -1)
     f=$(ls "$d"/FULL-REPORT_*.txt 2>/dev/null | head -1)
     if [ -n "$f" ]; then sudo -u "$CALLER" open "$f"; echo "$f"; else echo "No reports yet."; fi;;
-  --reports) ls -1 "$REPORT_DIR" 2>/dev/null | sort -r || echo "No reports yet.";;
-  --history) tail -30 "$STATE/history.log" 2>/dev/null || echo "No scans yet.";;
+  --reports) ls -1 "$REPORT_DIR" 2>/dev/null | sort -r | show;;
+  --history) if [ -s "$STATE/history.log" ]; then tail -30 "$STATE/history.log" | show; else echo "No scans yet."; fi;;
   --clean) /bin/bash "$ROOT/core/run.sh" --task clean;;
   --update-rules) /bin/bash "$ROOT/core/run.sh" --task update-rules;;
   --check-fda) start_job --task check-fda;;

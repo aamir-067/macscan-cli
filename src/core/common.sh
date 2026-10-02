@@ -1,6 +1,8 @@
 #!/bin/bash
 # mac-triage shared helpers. Read-only.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+# shellcheck source=lib/text.sh
+source "$ROOT/core/lib/text.sh"
 export LC_ALL=C
 DAYS="${DAYS:-60}"; MODULE="${MODULE:-core}"
 AS="$UH/Library/Application Support"
@@ -49,10 +51,16 @@ sigf(){
   esac
 }
 
-redact(){ perl -pe '
+# redact: masks secrets in everything written to a report. Patterns are deliberately
+# broad; a masked harmless value costs little, a leaked key costs a rotation.
+redact(){ sanitize | perl -pe '
   s/-----BEGIN [A-Z ]*PRIVATE KEY-----.*/<redacted private key>/;
-  s/\b(sk-[A-Za-z0-9_-]{10,}|sk_live_[A-Za-z0-9]{10,}|rk_live_[A-Za-z0-9]{10,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[abpr]-[A-Za-z0-9-]{10,}|npm_[A-Za-z0-9]{30,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})/<redacted>/g;
-  s/\b((?:[A-Za-z0-9_]*(?:API_?KEY|SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE_KEY|ACCESS_KEY))\s*[=:]\s*)\S.*/$1<redacted>/gi;
+  s/\b(sk-[A-Za-z0-9_-]{10,}|sk_(?:live|test)_[A-Za-z0-9]{10,}|rk_live_[A-Za-z0-9]{10,}|whsec_[A-Za-z0-9]{10,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|hf_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|xox[abpr]-[A-Za-z0-9-]{10,}|xapp-[A-Za-z0-9-]{10,}|npm_[A-Za-z0-9]{30,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})/<redacted>/g;
+  s#(hooks\.slack\.com/services/|discord(?:app)?\.com/api/webhooks/)\S+#$1<redacted>#gi;
+  s/\b(Bearer|Basic)\s+[A-Za-z0-9._~+\/-]{8,}=*/$1 <redacted>/g;
+  s/((?:^|\s)--?(?:password|passwd|pass|token|secret|api[-_]?key|access[-_]?key|auth-token)[= ])\S+/$1<redacted>/gi;
+  s/("[A-Za-z0-9_-]*(?:password|passwd|secret|token|api_?key|apikey|auth(?!or)|private_?key|access_?key)[A-Za-z0-9_-]*"\s*:\s*)"[^"]*"/$1"<redacted>"/gi;
+  s/\b((?:[A-Za-z0-9_]*(?:API_?KEY|SECRET|TOKEN|PASSWORD|PASSWD|PRIVATE_KEY|ACCESS_KEY|AccountKey))\s*[=:]\s*)\S.*/$1<redacted>/gi;
   s#(://[^:/\s]+:)[^@/\s]+@#$1<redacted>@#g;
 '; }
 

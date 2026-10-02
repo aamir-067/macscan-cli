@@ -44,3 +44,29 @@ rep(){ printf "%0${2}d" 0 | tr 0 "$1"; }   # rep CHAR N
   out=$(printf '%s\n' "-----BEGIN OPENSSH PRIVATE KEY-----" | redact)
   [ "$out" = "<redacted private key>" ]
 }
+
+@test "bearer tokens, CLI secret flags and JSON secret fields are masked" {
+  out=$(printf '%s\n' "curl -H 'Authorization: Bearer abcdefgh12345678' x" "tool --password hunter2 --token=t0k3n --verbose" '{"auth": "dXNlcjpwYXNz", "author": "Jane"}' | redact)
+  [[ "$out" != *abcdefgh12345678* && "$out" != *hunter2* && "$out" != *t0k3n* && "$out" != *dXNlcjpwYXNz* ]]
+  [[ "$out" == *'"author": "Jane"'* ]]
+}
+
+@test "webhook URLs are masked" {
+  out=$(printf 'https://hooks.slack.com/services/T000/B000/XXXX\n' | redact)
+  [ "$out" = "https://hooks.slack.com/services/<redacted>" ]
+}
+
+@test "control characters become visible, tabs and text survive" {
+  out=$(printf 'name\033[2Jcleared\tok\n' | redact)
+  [ "$out" = "$(printf 'name<0x1B>[2Jcleared\tok')" ]
+}
+
+@test "Unicode direction overrides are marked" {
+  out=$(printf 'invoice\xe2\x80\xaefdp.app\n' | redact)
+  [ "$out" = "invoice<U+202E>fdp.app" ]
+}
+
+@test "one_line joins lines and neutralizes escapes" {
+  out=$(printf 'Evil\033]0;x\007App\nSecond\n' | one_line)
+  [ "$out" = "Evil<0x1B>]0;x<0x07>App Second" ]
+}

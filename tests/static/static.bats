@@ -57,3 +57,8 @@ scripts(){ echo "$SRC/macscan"; ls "$SRC"/core/*.sh "$SRC"/core/lib/*.sh "$SRC"/
   grep -q 'HOME=/var/root' "$SRC/core/run.sh"
   grep -q 'env -i MACSCAN_CLEAN_ENV=1 .*HOME=/var/root' "$SRC/macscan"
 }
+
+@test "notifications pass text as arguments, not inside AppleScript source" {
+  grep -q "on run argv" "$SRC/core/lib/notify.sh"
+  ! grep -q 'display notification \\"\$' "$SRC/core/lib/notify.sh"
+}
