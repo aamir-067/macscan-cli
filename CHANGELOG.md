@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-03
+
 ### Fixed
 - `macscan --set` now adds a setting that is missing from an older config file (it used to do nothing), and checks yes/no and enumerated values.
 
@@ -51,6 +53,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/mac-triage/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/aamir-067/mac-triage/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/aamir-067/mac-triage/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/aamir-067/mac-triage/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/aamir-067/mac-triage/releases/tag/v2.0.0
