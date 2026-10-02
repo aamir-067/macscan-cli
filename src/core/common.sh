@@ -115,6 +115,13 @@ origin_check(){
 # shellcheck disable=SC2034  # used by modules 14 and 19
 if [ "${INCLUDE_TRASH:-no}" = yes ]; then TRASHP="/nonexistent/mac-triage-no-prune"; else TRASHP="$UH/.Trash"; fi
 
+# gitleaks_findings: reads a gitleaks JSON report on stdin and prints "file:line (rule)"
+# per finding. Secret values are never printed (gitleaks also redacts them).
+gitleaks_findings(){
+  perl -MJSON::PP -e 'local $/; my $j = eval { decode_json(<STDIN>) }; exit unless ref $j eq "ARRAY";
+    for (@$j) { next unless ref $_ eq "HASH"; printf "%s:%s (%s)\n", $_->{File} // "?", $_->{StartLine} // "?", $_->{RuleID} // "?" }'
+}
+
 # Folders never walked: cloud drives, VM disks, caches, dependency trees, our own reports
 PB=( -path "$UH/Library" -o -path "$UH/.Trash" -o -path "$UH/.orbstack" -o -path "$OUTBASE" -o -name node_modules -o -path "$UH/.npm" -o -path "$UH/.cache" -o -path "$UH/.gradle" -o -path "$UH/.rustup" -o -path "$UH/.cargo/registry" -o -path "$UH/go/pkg" -o -path "$UH/.bun/install" )
 PRUNE=( \( "${PB[@]}" -o -name .git \) -prune -o )

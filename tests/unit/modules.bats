@@ -35,7 +35,8 @@ selected(){ local m out=""; for m in "$SRC"/modules/*.sh; do module_selected "$m
   [ -z "$(module_meta "$SRC/modules/01-system.sh" quick)" ]
 }
 
-@test "a full scan selects every module" {
+@test "with opt-in features on, a full scan selects every module" {
+  SUPPLY_CHAIN=yes; EXEC_MONITOR=yes
   [ "$(selected | wc -w | tr -d ' ')" = "$(ls "$SRC"/modules/*.sh | wc -l | tr -d ' ')" ]
 }
 
@@ -53,4 +54,10 @@ selected(){ local m out=""; for m in "$SRC"/modules/*.sh; do module_selected "$m
 @test "--no-yara, --no-clamav and --no-logs drop their modules" {
   DO_YARA=no; DO_CLAM=no; NO_LOGS=1
   for n in 18 19 20; do [[ " $(selected) " != *" $n "* ]] || return 1; done
+}
+
+@test "opt-in modules run only when their setting is yes" {
+  [[ " $(selected) " != *" 22 "* ]] || return 1
+  SUPPLY_CHAIN=yes
+  [[ " $(selected) " == *" 22 "* ]] || return 1
 }

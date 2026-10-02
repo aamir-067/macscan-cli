@@ -124,3 +124,10 @@ teardown(){ drop_env; }
   run bash -c 'INCLUDE_TRASH=yes; source "$1/core/common.sh"; echo "$TRASHP"' _ "$SRC"
   [ "$output" != "$UH/.Trash" ]
 }
+
+@test "gitleaks_findings prints file, line and rule, never the secret" {
+  json='[{"RuleID":"aws-access-token","File":"/r/config.js","StartLine":12,"Secret":"REDACTED","Match":"key = REDACTED"}]'
+  out=$(printf '%s' "$json" | gitleaks_findings)
+  [ "$out" = "/r/config.js:12 (aws-access-token)" ]
+  [ -z "$(printf 'not json' | gitleaks_findings)" ]
+}

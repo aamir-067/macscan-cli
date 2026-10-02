@@ -4,7 +4,8 @@
 # Every module starts with header comments the engine reads:
 #   # @title  <one line shown by macscan --modules>
 #   # @quick  skip              left out of --quick scans
-#   # @toggle YARA|CLAMAV|LOGS  left out when that feature is turned off
+#   # @toggle YARA|CLAMAV|LOGS|SUPPLY_CHAIN|EXEC_MONITOR
+#                               left out when that feature is turned off
 
 # module_meta <file> <key>: prints the value of "# @key value" from the first 20 lines.
 module_meta(){
@@ -22,6 +23,8 @@ module_selected(){
     YARA) [ "$DO_YARA" = yes ] || return 1;;
     CLAMAV) [ "$DO_CLAM" = yes ] || return 1;;
     LOGS) [ "$NO_LOGS" = 1 ] && return 1;;
+    SUPPLY_CHAIN) [ "${SUPPLY_CHAIN:-no}" = yes ] || return 1;;
+    EXEC_MONITOR) [ "${EXEC_MONITOR:-no}" = yes ] || return 1;;
   esac
   return 0
 }

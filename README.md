@@ -47,6 +47,7 @@
 | 19 | YARA | Custom rules plus YARA Forge core and Elastic macOS rules, run as you |
 | 20 | ClamAV | Antivirus scan of your user folders and system launch locations, run as you |
 | 21 | Plaintext secrets | Password-manager exports, private keys and stray `.env` files in Downloads, Desktop and Documents (paths only, never contents) |
+| 22 | Supply chain (opt-in) | Known-vulnerable dependencies with `osv-scanner` (offline database) and committed secrets with `gitleaks` (redacted), across your repositories, run as you |
 
 New browsers, editors and AI tools are discovered by their folder structure, so they are covered without a code change. Every scan keeps a stable inventory (apps, launch items, extensions, MCP servers, hooks, permissions, and more) and reports anything **new since the last scan**, which is the most useful early-warning signal.
 
@@ -169,6 +170,7 @@ Matching is by substring of the flag text, so be specific. Acknowledged flags st
 | `ZIP` | `yes` | Also save a zip of each report |
 | `YARA` / `CLAMAV` | `yes` | Run the YARA and ClamAV modules |
 | `CLAMAV_SCOPE` | `standard` | `standard` (user folders and launch locations) or `full` (whole home folder, slow) |
+| `SUPPLY_CHAIN` | `no` | Run module 22 (needs `brew install osv-scanner gitleaks`; slow on many repositories) |
 | `INCLUDE_TRASH` | `no` | Also sweep the Trash with the file-system, YARA and ClamAV modules (`--include-trash` for one scan) |
 
 ## How it stays safe
