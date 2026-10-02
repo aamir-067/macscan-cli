@@ -27,4 +27,14 @@ YARA and ClamAV are optional: detection tests that need them are skipped when th
 
 - **Canary:** install a harmless LaunchAgent with label `test.canary.macscan` that runs `/usr/bin/true`, run `macscan --only 05`, confirm it is reported and appears under "new since last scan", then remove it. Do not use the `com.mactriage.` prefix; the scanner ignores its own labels.
 - **Installer, upgrade, uninstall and schedules:** use a macOS virtual machine (for example UTM) so testing never risks your real system.
+
+### Upgrade checklist (run in the VM for every release)
+
+1. Install the previous release, grant Full Disk Access to `macscan-helper`, run `macscan --quick` once (creates a baseline and history).
+2. `macscan --set KEEP_REPORTS=3` and `macscan --ignore "<some flag text>" --reason test` so there is user state to preserve.
+3. Install the new release over it with `sudo bash install-mac-triage.sh`.
+4. Check: `macscan --version` shows the new version; `macscan --config` still has `KEEP_REPORTS="3"` and any new keys work with `macscan --set`; `macscan --ignored` still lists the entry; `macscan --verify` is ok; `macscan --check-fda` (re-grant if the helper changed); `ls /usr/local/mac-triage/modules` has no leftover files.
+5. `macscan --quick`: the summary shows "new since last scan" against the old baseline, not a fresh baseline.
+6. `launchctl print system/com.mactriage.auto` shows the job; touch an app into `/Applications` and confirm an automatic scan starts within a few minutes.
+7. `macscan --uninstall`: the folder, both LaunchDaemons and `/usr/local/bin/macscan` are gone; reports remain.
 - **Performance:** compare per-module durations in the scan log between versions; investigate any module that grows by more than half.

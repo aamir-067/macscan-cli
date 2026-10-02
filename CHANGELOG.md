@@ -8,6 +8,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - `macscan --set` now adds a setting that is missing from an older config file (it used to do nothing), and checks yes/no and enumerated values.
 
 ### Added
+- `docs/companion-tools.md`: evaluation of Objective-See tools and the optional tools mac-triage uses (P2-5), and an upgrade checklist for VM testing in `docs/testing.md` (P3-1).
 - Module 24 (opt-in, experimental, `EXEC_MONITOR=yes`): the built-in `eslogger` records program starts during a full scan, minus the scan's own process group; programs from temp, hidden or Downloads folders are high, unsigned ones medium (P2-3).
 - Module 23: when osquery is installed and its whole path is root-owned, cross-checks launchd, startup items, network listeners, system extensions and Chromium extensions from an independent source (P2-2).
 - Module 22 (opt-in, `SUPPLY_CHAIN=yes`): `osv-scanner` with its offline database for known-vulnerable dependencies, and `gitleaks` for secrets committed to repositories (file, line and rule only). Both run as the user and are skipped with an install hint when missing (P2-1).

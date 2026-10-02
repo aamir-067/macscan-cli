@@ -189,6 +189,8 @@ A scanner that runs as root on a schedule is itself a target. The design assumes
 
 See [SECURITY.md](SECURITY.md) to report a vulnerability, and [CHANGELOG.md](CHANGELOG.md) for fixed issues.
 
+mac-triage takes snapshots; it does not watch your Mac between scans or block anything. For that, see [docs/companion-tools.md](docs/companion-tools.md) (BlockBlock and LuLu are good partners).
+
 ## Privacy
 
 - Nothing about your Mac is sent anywhere. Reports stay on your disk.
