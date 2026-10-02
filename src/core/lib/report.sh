@@ -34,6 +34,18 @@ diff_inventories(){
   rm -rf "$INV"
 }
 
+# prepare_flags: redacts and de-duplicates the raw flags, then sorts them by severity
+# into $RUN/.flags.tsv (rank, severity, line). Sets NFLAGS and per-severity counts.
+prepare_flags(){
+  sort -u "$RUN/.flags.raw" | redact > "$RUN/.flags"
+  classify_flags "$RUN/.flags" | sort -t "$(printf '\t')" -k1,1n -k3 > "$RUN/.flags.tsv"
+  NFLAGS=$(grep -c . "$RUN/.flags.tsv" || true)
+  N_CRIT=$(awk -F'\t' '$2=="critical"' "$RUN/.flags.tsv" | grep -c . || true)
+  N_HIGH=$(awk -F'\t' '$2=="high"' "$RUN/.flags.tsv" | grep -c . || true)
+  N_MED=$(awk -F'\t' '$2=="medium"' "$RUN/.flags.tsv" | grep -c . || true)
+  N_LOW=$(awk -F'\t' '$2=="low"' "$RUN/.flags.tsv" | grep -c . || true)
+}
+
 # write_summary: prints the summary text (caller redirects it).
 write_summary(){
   echo "mac-triage $VERSION scan summary"
@@ -41,10 +53,10 @@ write_summary(){
   echo "User: $U | Look-back: $DAYS days | Full Disk Access: $FDA | Duration: $(( ($(date +%s)-T0)/60 )) min"
   echo "YARA rules: $(cat "$ROOT/rules/sets.txt" 2>/dev/null || echo none) | ClamAV: $( [ -x /opt/homebrew/bin/clamscan ] && echo installed || echo not installed)"
   echo
-  echo "RED FLAGS: $NFLAGS"
-  echo "Not every flag means malware. Each one is something to verify."
+  echo "RED FLAGS: $NFLAGS (critical $N_CRIT, high $N_HIGH, medium $N_MED, low $N_LOW)"
+  echo "Not every flag means malware. Each one is something to verify. Most severe first."
   echo
-  sort -u "$RUN/.flags.raw"
+  awk -F'\t' '{ printf "[%s] %s\n", toupper($2), $3 }' "$RUN/.flags.tsv"
   echo
   echo "NEW OR REMOVED SINCE THE LAST SCAN"
   cat "$NEWS"

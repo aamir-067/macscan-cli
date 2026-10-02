@@ -28,10 +28,15 @@ teardown(){ drop_env; }
   [ ! -d "$INV" ]
 }
 
-@test "summary lists unique flags and the count" {
-  printf '[a] x\n[a] x\n[b] y\n' > "$RUN/.flags.raw"; : > "$NEWS"
-  VERSION=t MODE=manual REASON=test FDA=yes T0=$(date +%s) NFLAGS=2 ROOT="$SRC"
+@test "summary lists unique flags, most severe first, with counts" {
+  source "$SRC/core/lib/severity.sh"; source "$SRC/core/common.sh"
+  printf '[09-network] Listener reachable from the network: a\n[a] x\n[a] x\n[17-code-repos] Injected malware marker found: /p.js\n' > "$RUN/.flags.raw"; : > "$NEWS"
+  VERSION=t MODE=manual REASON=test FDA=yes T0=$(date +%s) ROOT="$SRC"
+  prepare_flags
+  [ "$NFLAGS" = 3 ] && [ "$N_CRIT" = 1 ] && [ "$N_LOW" = 1 ]
   run write_summary
-  [[ "$output" == *"RED FLAGS: 2"* ]] || return 1
-  [ "$(grep -c '^\[a\] x$' <<<"$output")" = 1 ]
+  [[ "$output" == *"RED FLAGS: 3 (critical 1, high 0, medium 1, low 1)"* ]] || return 1
+  [ "$(grep -c '^\[MEDIUM\] \[a\] x$' <<<"$output")" = 1 ]
+  [ "$(grep '^\[' <<<"$output" | head -1)" = "[CRITICAL] [17-code-repos] Injected malware marker found: /p.js" ]
+  [ "$(grep '^\[' <<<"$output" | tail -1)" = "[LOW] [09-network] Listener reachable from the network: a" ]
 }

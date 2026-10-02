@@ -4,6 +4,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- Severity for every flag (critical, high, medium, low) from a central rubric in `core/lib/severity.sh`. The summary shows counts per severity and lists the most severe first as `[HIGH] [module] message`; the flag text after the severity tag is unchanged. New inventory items in persistence-type categories are high, others medium.
+
 ## [2.1.0] - 2026-10-02
 
 ### Security
