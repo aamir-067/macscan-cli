@@ -84,3 +84,24 @@ yara_rules(){
   run /opt/homebrew/bin/clamscan --no-summary "$TEST_TMP/eicar.txt"
   [[ "$output" == *"FOUND"* ]]
 }
+
+@test "17 flags a repository git config that can run commands, with file:line" {
+  mkdir -p "$UH/proj/.git"
+  printf '[core]\n\tfsmonitor = ./hook.sh\n' > "$UH/proj/.git/config"
+  mod 17
+  grep -qF "Repo git config can execute commands: $UH/proj/.git/config:	fsmonitor = ./hook.sh" "$RUN/.flags.raw"
+}
+
+@test "17 ignores a symlinked tasks.json" {
+  mkdir -p "$UH/proj/.vscode" "$TEST_TMP/elsewhere"
+  printf '{"runOn":"%s"}\n' "folder""Open" > "$TEST_TMP/elsewhere/tasks.json"
+  ln -s "$TEST_TMP/elsewhere/tasks.json" "$UH/proj/.vscode/tasks.json"
+  mod 17
+  ! grep -q "Task auto-runs" "$RUN/.flags.raw"
+}
+
+@test "16 flags git settings that run commands, with file:line" {
+  printf '[core]\n\tpager = less -R\n' > "$UH/.gitconfig"
+  mod 16
+  grep -qF "Git setting that can run commands (verify): $UH/.gitconfig:	pager = less -R" "$RUN/.flags.raw"
+}

@@ -25,7 +25,7 @@ selected(){ local m out=""; for m in "$SRC"/modules/*.sh; do module_selected "$m
 }
 
 @test "modules never write outside the run folder: no rm, mv, chmod, chown, kill or launchctl changes" {
-  run bash -c 'grep -nE "$0" "$@" | grep -v ":[[:space:]]*grep "' '(^|[;&|[:space:]])(rm -rf? [^"]*"\$(UH|HOME)|mv |chmod |chown |kill |pkill |launchctl (load|unload|bootout|bootstrap|remove|kickstart)|defaults write|tccutil|xattr -[cdw])' "$SRC"/modules/*.sh
+  run bash -c 'grep -nE "$0" "$@" | grep -v -e ":[[:space:]]*grep " -e "| grep -"' '(^|[;&|[:space:]])(rm -rf? [^"]*"\$(UH|HOME)|mv |chmod |chown |kill |pkill |launchctl (load|unload|bootout|bootstrap|remove|kickstart)|defaults write|tccutil|xattr -[cdw])' "$SRC"/modules/*.sh
   [ "$status" -eq 1 ]
 }
 

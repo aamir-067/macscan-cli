@@ -13,7 +13,7 @@ done
 launchctl print system/com.apple.screensharing >/dev/null 2>&1 && flag "Screen Sharing is enabled"
 pgrep -x ARDAgent >/dev/null && flag "Apple Remote Desktop agent is running"
 sub "authorized_keys on this Mac"
-for h in /Users/* /var/root; do f="$h/.ssh/authorized_keys"; [ -f "$f" ] && { echo "[$f]"; cat "$f"; inv remote "authorized_keys $f $(sha "$f")"; flag "authorized_keys file exists on this Mac: $f"; }; done
+for h in /Users/* /var/root; do f="$h/.ssh/authorized_keys"; [ -f "$f" ] && { echo "[$f]"; rd "$f"; inv remote "authorized_keys $f $(sha "$f")"; flag "authorized_keys file exists on this Mac: $f"; }; done
 sub "sshd configuration (active lines)"; grep -vE '^[[:space:]]*(#|$)' /etc/ssh/sshd_config 2>/dev/null; ls -laT /etc/ssh/sshd_config.d 2>/dev/null
 sub "Remote access and tunnel tools on disk"
 find /Applications "$UH/Applications" "/Library/Application Support" "$AS" /opt/homebrew/bin /usr/local/bin "$UH/.local/bin" -maxdepth 2 \( -iname "*anydesk*" -o -iname "*teamviewer*" -o -iname "*rustdesk*" -o -iname "*screenconnect*" -o -iname "*splashtop*" -o -iname "*ngrok*" -o -iname "*cloudflared*" -o -iname "frpc" -o -iname "chisel" -o -iname "*parsec*" -o -iname "*jumpdesktop*" \) 2>/dev/null | while IFS= read -r p; do echo "$p"; inv remote "tool $p"; flag "Remote access or tunnel tool present: $p"; done

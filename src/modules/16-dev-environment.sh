@@ -41,9 +41,9 @@ ls -1 "$UH/.claude/plugins/marketplaces" 2>/dev/null | while read -r m; do echo 
 
 section "Package manager configs (registry hijack check)"
 for f in "$UH/.npmrc" "$UH/.yarnrc" "$UH/.yarnrc.yml" "$UH/.bunfig.toml" "$UH/.config/pip/pip.conf" "$UH/.pip/pip.conf" "$UH/.pypirc" "$UH/.cargo/config.toml" "$UH/.gemrc" /etc/npmrc /opt/homebrew/etc/npmrc; do
-  [ -f "$f" ] && { echo "[$f]"; cat "$f"; inv registries "$f $(sha "$f")"; }
+  [ -f "$f" ] && { echo "[$f]"; rd "$f"; inv registries "$f $(sha "$f")"; }
 done
-cat "$UH/.npmrc" "$UH/.yarnrc" "$UH/.yarnrc.yml" "$UH/.bunfig.toml" "$UH/.config/pip/pip.conf" "$UH/.pip/pip.conf" /etc/npmrc 2>/dev/null | grep -iE "registry|index-url" | grep -vE "registry\.npmjs\.org|registry\.yarnpkg\.com|pypi\.org" | while read -r l; do flag "Non-default package registry configured: $l"; done
+rd "$UH/.npmrc" "$UH/.yarnrc" "$UH/.yarnrc.yml" "$UH/.bunfig.toml" "$UH/.config/pip/pip.conf" "$UH/.pip/pip.conf" /etc/npmrc 2>/dev/null | grep -iE "registry|index-url" | grep -vE "registry\.npmjs\.org|registry\.yarnpkg\.com|pypi\.org" | while read -r l; do flag "Non-default package registry configured: $l"; done
 
 section "Global packages"
 for d in /opt/homebrew/lib/node_modules /usr/local/lib/node_modules "$UH"/.nvm/versions/node/*/lib/node_modules "$UH/.bun/install/global/node_modules"; do
@@ -56,13 +56,13 @@ sub "Python user packages"; ls -1 "$UH"/Library/Python/*/lib/python/site-package
 sub "npx cache"; for p in "$UH"/.npm/_npx/*/node_modules; do [ -d "$p" ] && ls -1 "$p" | grep -v '^\.'; done | sort -u | head -150
 
 section "Git configuration"
-for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig /opt/homebrew/etc/gitconfig; do [ -f "$f" ] && { echo "[$f]"; cat "$f"; inv gitcfg "$f $(sha "$f")"; }; done
-grep -iE "hooksPath|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig 2>/dev/null | grep -v "osxkeychain" | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
+for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig /opt/homebrew/etc/gitconfig; do [ -f "$f" ] && { echo "[$f]"; rd "$f"; inv gitcfg "$f $(sha "$f")"; }; done
+for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig; do [ -f "$f" ] && rd "$f" | grep -iE "hooksPath|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" | sed "s|^|$f:|"; done | grep -v "osxkeychain" | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
 
 section "SSH client"
-ls -laT "$UH/.ssh"; cat "$UH/.ssh/config" 2>/dev/null; [ -f "$UH/.ssh/config" ] && inv sshcfg "$UH/.ssh/config $(sha "$UH/.ssh/config")"
+ls -laT "$UH/.ssh"; [ -f "$UH/.ssh/config" ] && rd "$UH/.ssh/config"; [ -f "$UH/.ssh/config" ] && inv sshcfg "$UH/.ssh/config $(sha "$UH/.ssh/config")"
 grep -vE '^[[:space:]]*(#|$)' /etc/ssh/ssh_config 2>/dev/null; ls -la /etc/ssh/ssh_config.d 2>/dev/null
-grep -iE "ProxyCommand|LocalCommand|PermitLocalCommand|KnownHostsCommand" "$UH/.ssh/config" /etc/ssh/ssh_config /etc/ssh/ssh_config.d/* 2>/dev/null | while read -r l; do flag "SSH config can run commands (verify): $l"; done
+for f in "$UH/.ssh/config" /etc/ssh/ssh_config /etc/ssh/ssh_config.d/*; do [ -f "$f" ] && rd "$f" | grep -iE "ProxyCommand|LocalCommand|PermitLocalCommand|KnownHostsCommand" | sed "s|^|$f:|"; done | while read -r l; do flag "SSH config can run commands (verify): $l"; done
 ls "$UH/.ssh" 2>/dev/null | grep -vE "\.pub$|^config$|^known_hosts|^authorized_keys$" | while read -r k; do flag "File in ~/.ssh may be a private key: $k"; done
 
 section "Credential files on disk (paths only)"

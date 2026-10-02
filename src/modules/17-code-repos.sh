@@ -15,14 +15,14 @@ PAT='global\[[_$!]|String\.fromCharCode\(127\)|\\x[0-9a-fA-F]{2}\\x[0-9a-fA-F]{2
 grep -rlE --exclude-dir=node_modules --exclude-dir=Library --exclude-dir=.git --exclude-dir=.next --exclude-dir=dist --exclude-dir=build --exclude-dir=.Trash --exclude-dir=.orbstack --include="*.js" --include="*.cjs" --include="*.mjs" --include="*.ts" -e "$PAT" "$UH" 2>/dev/null | head -150
 
 section "package.json install scripts (run automatically on npm/bun install)"
-find "$UH" "${PRUNE[@]}" -name package.json -print 2>/dev/null | while IFS= read -r p; do
+find "$UH" "${PRUNE[@]}" -type f -name package.json -print 2>/dev/null | while IFS= read -r p; do
   # shellcheck disable=SC2094  # the path is only passed as a name; the file is read once
   perl -MJSON::PP -e 'local $/; my $j=eval{decode_json(<STDIN>)} or exit; my $s=$j->{scripts}; exit unless ref $s eq "HASH"; for (qw(preinstall install postinstall prepare)) { print "$ARGV[0] | $_: $s->{$_}\n" if exists $s->{$_} }' "$p" < "$p"
 done | head -250
 
 section "Editor tasks that run automatically when a folder opens"
-find "$UH" "${PRUNE[@]}" -path "*/.vscode/tasks.json" -print 2>/dev/null | while IFS= read -r t; do
-  grep -q "folderOpen" "$t" && { echo "$t"; grep -n -B3 -A3 "folderOpen" "$t"; flag "Task auto-runs on folder open: $t"; }
+find "$UH" "${PRUNE[@]}" -type f -path "*/.vscode/tasks.json" -print 2>/dev/null | while IFS= read -r t; do
+  rd "$t" | grep -q "folderOpen" && { echo "$t"; rd "$t" | grep -n -B3 -A3 "folderOpen"; flag "Task auto-runs on folder open: $t"; }
 done
 
 section "Active git hooks in repositories"
@@ -31,6 +31,6 @@ find "$UH" "${PRUNE_KEEPGIT[@]}" -type d -path "*/.git/hooks" -print 2>/dev/null
 done | head -150
 
 section "Repository git configs that can execute commands"
-find "$UH" "${PRUNE_KEEPGIT[@]}" -path "*/.git/config" -print 2>/dev/null | while IFS= read -r c; do
-  grep -HiE "fsmonitor|hooksPath|sshCommand|pager|textconv|external|askpass" "$c" | while read -r l; do echo "$l"; flag "Repo git config can execute commands: $l"; done
+find "$UH" "${PRUNE_KEEPGIT[@]}" -type f -path "*/.git/config" -print 2>/dev/null | while IFS= read -r c; do
+  rd "$c" | grep -iE "fsmonitor|hooksPath|sshCommand|pager|textconv|external|askpass" | sed "s|^|$c:|" | while read -r l; do echo "$l"; flag "Repo git config can execute commands: $l"; done
 done

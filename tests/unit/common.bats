@@ -91,3 +91,22 @@ teardown(){ drop_env; }
   run sql "$TEST_TMP/t.db" "insert into a values(1)"
   [ "$status" -ne 0 ]
 }
+
+@test "user_path covers user-writable places and not system ones" {
+  user_path "$UH/.zshrc"; user_path /opt/homebrew/etc/gitconfig; user_path /Applications/X.app/Contents/x.json; user_path /private/tmp/x
+  ! user_path /etc/sudoers; ! user_path /var/root/.zshrc; ! user_path /var/db/dslocal/nodes/Default/users/x.plist
+}
+
+@test "rd reads user files with the user's rights (a planted symlink yields nothing)" {
+  echo "secret-hash" > "$TEST_TMP/rootonly"; chmod 000 "$TEST_TMP/rootonly"
+  ln -s "$TEST_TMP/rootonly" "$UH/.npmrc"
+  PATH="$REPO/tests/stubs:$PATH" run rd "$UH/.npmrc"
+  chmod 600 "$TEST_TMP/rootonly"
+  [[ "$output" != *secret-hash* ]]
+}
+
+@test "rd prints ordinary files" {
+  printf 'a\nb\n' > "$UH/.zshrc"
+  PATH="$REPO/tests/stubs:$PATH" run rd "$UH/.zshrc"
+  [ "$output" = "$(printf 'a\nb')" ]
+}

@@ -57,7 +57,7 @@ for d in com.google.Chrome com.brave.Browser com.microsoft.Edge org.mozilla.fire
   done
 done
 asuser defaults read com.google.Chrome ExtensionInstallForcelist 2>/dev/null && flag "Chrome has force-installed extensions configured"
-for pj in /Applications/*.app/Contents/Resources/distribution/policies.json; do [ -f "$pj" ] && { cat "$pj"; flag "Browser policies.json present: $pj"; }; done
+for pj in /Applications/*.app/Contents/Resources/distribution/policies.json; do [ -f "$pj" ] && { rd "$pj"; flag "Browser policies.json present: $pj"; }; done
 
 section "Saved passwords and cards per browser profile (counts only, no contents)"
 chromium_ext_dirs | while IFS= read -r ed; do
