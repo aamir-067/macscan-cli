@@ -1,0 +1,210 @@
+#!/bin/bash
+# macscan: command-line front end for mac-triage.
+ROOT="/usr/local/mac-triage"; STATE="$ROOT/state"; VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo unknown)"
+RUN_LABEL="com.mactriage.runner"; AUTO_LABEL="com.mactriage.auto"
+RUN_PLIST="/Library/LaunchDaemons/$RUN_LABEL.plist"; AUTO_PLIST="/Library/LaunchDaemons/$AUTO_LABEL.plist"
+
+usage(){ echo "macscan $VERSION: deep, read-only security scanner for macOS"; cat <<'USAGE'
+
+SCANNING
+  macscan                      Full deep scan (background service with Full Disk Access, live progress)
+  macscan --quick              Fast scan: skips file-system sweep, logs, YARA and ClamAV
+  macscan --foreground         Run inside this terminal instead (terminal needs Full Disk Access)
+  macscan --only 05,15         Run only these modules (see --modules)
+  macscan --skip 19,20         Skip these modules
+  macscan --days N             Look-back window for "recent" checks
+  macscan --no-yara            Skip the YARA scan
+  macscan --no-clamav          Skip the ClamAV scan
+  macscan --clamav-full        ClamAV scans your whole home folder (slow)
+  macscan --no-logs            Skip the unified log module
+  macscan --output /full/path  Save this scan somewhere else
+  macscan --only-if-findings   Delete the report if nothing suspicious is found
+  macscan --always-report      Keep the report even when clean
+  macscan --no-zip             Don't create a zip
+  macscan --no-notify          No notification when done
+  macscan --open               Open the report when done
+  macscan --keep N             Keep N reports after this scan
+
+AUTOMATIC SCANS
+  macscan --auto on|off        Weekly scans plus a scan when a new app is installed
+  macscan --status             Schedule, running scan, last result, tool versions
+  macscan --stop               Stop a running scan (manual or automatic)
+  macscan --log                Watch a running scan
+
+REPORTS
+  macscan --last               Open the latest full report
+  macscan --reports            List saved reports
+  macscan --history            Results of past scans
+  macscan --clean              Apply report cleanup now
+
+MAINTENANCE
+  macscan --update-rules       Update YARA rules and ClamAV signatures now
+  macscan --check-fda          Check the scanner has Full Disk Access
+  macscan --modules            List scan modules
+  macscan --config             Show settings
+  macscan --set KEY=VALUE      Change a setting, e.g. KEEP_REPORTS=3 or AUTO_INTERVAL_DAYS=14
+  macscan --uninstall          Remove mac-triage (your reports are kept)
+  macscan --version | --help
+USAGE
+}
+
+case "${1:-}" in -h|--help|help) usage; exit 0;; -v|--version) echo "macscan $VERSION"; exit 0;; esac
+[ "$EUID" -ne 0 ] && exec sudo "$ROOT/macscan" "$@"
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+source "$ROOT/config"
+CALLER="${SUDO_USER:-$TARGET_USER}"
+
+running_pid(){ local p; p=$(cat "$STATE/running.pid" 2>/dev/null); [ -n "$p" ] && kill -0 "$p" 2>/dev/null && echo "$p"; }
+fmt_ts(){ if [ "${1:-0}" -gt 0 ] 2>/dev/null; then date -r "$1" '+%F %H:%M'; else echo "never"; fi; }
+
+follow(){
+  local i=0 tp
+  while ! grep -q "@@START@@" "$STATE/current.log" 2>/dev/null; do
+    sleep 0.5; i=$((i+1))
+    if [ $i -gt 60 ]; then echo "The scan did not start. Details: sudo tail $STATE/service.log"; return 1; fi
+  done
+  tail -n +1 -f "$STATE/current.log" & tp=$!
+  trap "kill $tp 2>/dev/null; echo; echo 'Stopped watching. The scan continues in the background.'; echo '  macscan --log    watch again'; echo '  macscan --stop   cancel it'; exit 0" INT
+  while [ -n "$(running_pid)" ]; do sleep 2; done
+  sleep 1; kill $tp 2>/dev/null; wait $tp 2>/dev/null
+  return 0
+}
+
+set_config_raw(){ sed -i '' "s|^$1=.*|$1=\"$2\"|" "$ROOT/config"; }
+set_config(){
+  local k="${1%%=*}" v="${1#*=}"
+  [ "$k" = "$1" ] && { echo "Usage: macscan --set KEY=VALUE (see macscan --config)"; return 1; }
+  case "$k" in REPORT_DIR|KEEP_REPORTS|MAX_AGE_DAYS|LOOKBACK_DAYS|AUTO_INTERVAL_DAYS|AUTO_ON_NEW_APP|AUTO_MIN_BATTERY|ONLY_IF_FINDINGS|NOTIFY|ZIP|YARA|CLAMAV|CLAMAV_SCOPE) ;;
+    *) echo "Unknown setting: $k"; return 1;; esac
+  case "$v" in ""|*[!A-Za-z0-9/_.\ -]*) echo "Invalid value: $v"; return 1;; esac
+  case "$k" in KEEP_REPORTS|MAX_AGE_DAYS|LOOKBACK_DAYS|AUTO_INTERVAL_DAYS|AUTO_MIN_BATTERY)
+    case "$v" in *[!0-9]*) echo "$k must be a number"; return 1;; esac
+    [ "$k" = KEEP_REPORTS ] && [ "$v" -lt 1 ] && { echo "KEEP_REPORTS must be at least 1"; return 1; };;
+  esac
+  case "$k" in REPORT_DIR) case "$v" in /*) ;; *) echo "REPORT_DIR must be a full path"; return 1;; esac;; esac
+  set_config_raw "$k" "$v"; echo "$k = $v"
+}
+
+helper_args(){
+  if [ -x "$ROOT/bin/macscan-helper" ]; then printf '<string>%s</string>' "$ROOT/bin/macscan-helper"
+  else printf '<string>/bin/bash</string><string>%s</string>' "$ROOT/core/run.sh"; fi
+}
+write_plist(){
+  local label="$1" arg="$2" extra="$3" file="/Library/LaunchDaemons/$1.plist"
+  cat > "$file" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$label</string>
+  <key>ProgramArguments</key><array>$(helper_args)<string>$arg</string></array>
+  <key>StandardOutPath</key><string>$STATE/service.log</string>
+  <key>StandardErrorPath</key><string>$STATE/service.log</string>
+  <key>Nice</key><integer>5</integer>
+  <key>LowPriorityIO</key><true/>
+$extra
+</dict></plist>
+EOF
+  chown root:wheel "$file"; chmod 644 "$file"
+}
+install_services(){
+  launchctl bootout "system/$RUN_LABEL" 2>/dev/null
+  write_plist "$RUN_LABEL" "--from-request" ""
+  launchctl bootstrap system "$RUN_PLIST" && echo "Scan service installed."
+  [ "$AUTO" = on ] && auto_on
+  return 0
+}
+auto_on(){
+  local uh; uh=$(dscl . -read "/Users/$TARGET_USER" NFSHomeDirectory | awk '{print $2}')
+  launchctl bootout "system/$AUTO_LABEL" 2>/dev/null
+  write_plist "$AUTO_LABEL" "--scheduled" "  <key>StartInterval</key><integer>3600</integer>
+  <key>WatchPaths</key><array><string>/Applications</string><string>$uh/Applications</string></array>
+  <key>RunAtLoad</key><false/>"
+  if launchctl bootstrap system "$AUTO_PLIST"; then set_config_raw AUTO on; echo "Automatic scans: ON (every $AUTO_INTERVAL_DAYS days, plus new apps)"; fi
+}
+auto_off(){ launchctl bootout "system/$AUTO_LABEL" 2>/dev/null; rm -f "$AUTO_PLIST"; set_config_raw AUTO off; echo "Automatic scans: OFF"; }
+
+status(){
+  local p
+  echo "macscan $VERSION"
+  if launchctl print "system/$AUTO_LABEL" >/dev/null 2>&1; then
+    echo "Automatic scans:  ON (every $AUTO_INTERVAL_DAYS days, new apps: $AUTO_ON_NEW_APP, skips below $AUTO_MIN_BATTERY% battery)"
+  else echo "Automatic scans:  OFF"; fi
+  p=$(running_pid)
+  if [ -n "$p" ]; then echo "Running now:      yes (pid $p). Use macscan --log or macscan --stop"; else echo "Running now:      no"; fi
+  echo "Last scan:        $(tail -1 "$STATE/history.log" 2>/dev/null || echo never)"
+  echo "Last full scan:   $(fmt_ts "$(cat "$STATE/last-full-scan" 2>/dev/null)")"
+  echo "Reports:          $REPORT_DIR ($(find "$REPORT_DIR" -maxdepth 1 -type d -name 'scan_*' 2>/dev/null | wc -l | tr -d ' ') kept, max $KEEP_REPORTS, max age $MAX_AGE_DAYS days)"
+  echo "Full Disk Access: $(cat "$STATE/fda-status" 2>/dev/null || echo 'unknown, run: macscan --check-fda')"
+  if [ -x /opt/homebrew/bin/yara ]; then echo "YARA:             $(sudo -u "$CALLER" /opt/homebrew/bin/yara --version), rules: $(cat "$ROOT/rules/sets.txt" 2>/dev/null), updated $(fmt_ts "$(cat "$STATE/rules-updated" 2>/dev/null)")"; else echo "YARA:             not installed"; fi
+  if [ -x /opt/homebrew/bin/clamscan ]; then echo "ClamAV:           $(sudo -u "$CALLER" /opt/homebrew/bin/clamscan --version 2>/dev/null), updated $(fmt_ts "$(cat "$STATE/clam-updated" 2>/dev/null)")"; else echo "ClamAV:           not installed"; fi
+}
+
+stop_scan(){
+  local p i; p=$(running_pid)
+  [ -z "$p" ] && { echo "No scan is running."; return 0; }
+  kill -TERM -- -"$p" 2>/dev/null || kill -TERM "$p" 2>/dev/null
+  for i in 1 2 3 4 5 6 7 8 9 10; do [ -z "$(running_pid)" ] && break; sleep 1; done
+  [ -n "$(running_pid)" ] && kill -KILL -- -"$p" 2>/dev/null
+  rm -f "$STATE/running.pid"; echo "Scan stopped."
+}
+
+validate(){
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --quick|--foreground|--no-yara|--no-clamav|--clamav-full|--no-logs|--only-if-findings|--always-report|--no-zip|--no-notify|--open) shift;;
+      --days|--keep) case "${2:-}" in ''|*[!0-9]*) echo "$1 needs a number"; exit 2;; esac; shift 2;;
+      --only|--skip) case "${2:-}" in ''|*[!0-9,]*) echo "$1 needs module numbers like 05,15"; exit 2;; esac; shift 2;;
+      --output) case "${2:-}" in /*) ;; *) echo "--output needs a full path, e.g. /Users/you/Desktop/scans"; exit 2;; esac; shift 2;;
+      --task) shift 2;;
+      *) echo "Unknown option: $1"; echo "See: macscan --help"; exit 2;;
+    esac
+  done
+}
+
+start_job(){
+  if [ -n "$(running_pid)" ]; then echo "A scan is already running. Use macscan --log or macscan --stop."; exit 1; fi
+  validate "$@"
+  for a in "$@"; do
+    [ "$a" = "--foreground" ] && exec perl -e 'setpgrp(0,0); exec @ARGV' /bin/bash "$ROOT/core/run.sh" "$@"
+  done
+  if [ $# -gt 0 ]; then printf '%q ' "$@" > "$STATE/request"; else : > "$STATE/request"; fi
+  rm -f "$STATE/current.log"
+  launchctl print "system/$RUN_LABEL" >/dev/null 2>&1 || install_services >/dev/null
+  launchctl kickstart "system/$RUN_LABEL" >/dev/null 2>&1 || { echo "Could not start the scan service. Try: macscan --foreground"; exit 1; }
+  echo "Started in the background service. Live progress below (Ctrl+C stops watching, not the scan)."
+  follow
+}
+
+uninstall(){
+  local a
+  read -r -p "Remove mac-triage completely? Reports in $REPORT_DIR are kept. Type yes: " a
+  [ "$a" = yes ] || { echo "Cancelled."; exit 1; }
+  stop_scan >/dev/null
+  launchctl bootout "system/$AUTO_LABEL" 2>/dev/null; launchctl bootout "system/$RUN_LABEL" 2>/dev/null
+  rm -f "$AUTO_PLIST" "$RUN_PLIST" /usr/local/bin/macscan
+  rm -rf "$ROOT"
+  echo "Removed. Also remove macscan-helper from Full Disk Access in System Settings."
+  echo "Optional: brew uninstall yara clamav"
+}
+
+case "${1:-}" in
+  --status) status;;
+  --stop) stop_scan;;
+  --auto) case "${2:-}" in on) auto_on;; off) auto_off;; *) echo "Usage: macscan --auto on|off";; esac;;
+  --log) if [ -n "$(running_pid)" ]; then follow; else echo "No scan is running. End of the last log:"; tail -40 "$STATE/current.log" 2>/dev/null; fi;;
+  --last)
+    d=$(find "$REPORT_DIR" -maxdepth 1 -type d -name 'scan_*' 2>/dev/null | sort | tail -1)
+    f=$(ls "$d"/FULL-REPORT_*.txt 2>/dev/null | head -1)
+    if [ -n "$f" ]; then sudo -u "$CALLER" open "$f"; echo "$f"; else echo "No reports yet."; fi;;
+  --reports) ls -1 "$REPORT_DIR" 2>/dev/null | sort -r || echo "No reports yet.";;
+  --history) tail -30 "$STATE/history.log" 2>/dev/null || echo "No scans yet.";;
+  --clean) /bin/bash "$ROOT/core/run.sh" --task clean;;
+  --update-rules) /bin/bash "$ROOT/core/run.sh" --task update-rules;;
+  --check-fda) start_job --task check-fda;;
+  --modules) ls -1 "$ROOT/modules" | sed 's/\.sh$//';;
+  --config) grep -v '^#' "$ROOT/config";;
+  --set) set_config "${2:-}";;
+  --install-services) install_services;;
+  --uninstall) uninstall;;
+  *) start_job "$@";;
+esac
