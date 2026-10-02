@@ -24,7 +24,7 @@ for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAge
     inv launch "$f | ${tgt:-?} | $(sha "$f")"
     if [ -n "$tgt" ]; then
       if [ -e "$tgt" ]; then printf "  target: "; sigf "$tgt"; else echo "  target missing: $tgt"; fi
-      case "$tgt" in */tmp/*|/Users/Shared/*|/private/var/folders/*|"$UH"/.*) flag "Launch item runs from an unusual location: $f -> $tgt";; esac
+      case "$(canon_path "$tgt")" in */tmp/*|/Users/Shared/*|/private/var/folders/*|/var/folders/*|"$UH"/.*) flag "Launch item runs from an unusual location: $f -> $tgt";; esac
       case "$tgt" in */osascript|*/bash|*/sh|*/zsh|*/python*|*/node|*/perl|*/curl|*/ruby|*/deno|*/bun) flag "Launch item runs an interpreter directly: $f -> $args";; esac
     fi
     [ -n "$(find "$f" -Btime -"$DAYS" 2>/dev/null)" ] && flag "Launch item created in the last $DAYS days: $f"

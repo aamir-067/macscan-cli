@@ -110,3 +110,10 @@ teardown(){ drop_env; }
   PATH="$REPO/tests/stubs:$PATH" run rd "$UH/.zshrc"
   [ "$output" = "$(printf 'a\nb')" ]
 }
+
+@test "paths through the writable data volume are not treated as system paths" {
+  ! is_system_path /System/Volumes/Data/private/tmp/evil
+  ! is_system_path /System/Volumes/Data/Users/x/.hidden/agent
+  [ "$(canon_path /System/Volumes/Data/private/tmp/evil)" = /private/tmp/evil ]
+  [ "$(canon_path /usr/bin/true)" = /usr/bin/true ]
+}

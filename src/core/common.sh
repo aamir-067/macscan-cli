@@ -24,7 +24,10 @@ sha(){ shasum -a 256 "$1" 2>/dev/null | awk '{print substr($1,1,16)}'; }
 user_path(){ case "$1" in "$UH"/*|/Users/Shared/*|/Applications/*|/opt/homebrew/*|/usr/local/*|/tmp/*|/private/tmp/*|/var/tmp/*|/private/var/tmp/*) return 0;; esac; return 1; }
 rd(){ local f; for f in "$@"; do if user_path "$f"; then sudo -u "$U" /bin/cat -- "$f"; else cat -- "$f"; fi; done; }
 is_self(){ case "$1" in "$ROOT"/*|*com.mactriage.*) return 0;; esac; return 1; }
-is_system_path(){ case "$1" in /System/*|/usr/libexec/*|/usr/sbin/*|/sbin/*|/bin/*|/usr/bin/*|/Library/Apple/*) return 0;; esac; return 1; }
+# /System/Volumes/Data is the writable data volume: /System/Volumes/Data/private/tmp/x is
+# the same file as /private/tmp/x. Strip that prefix before judging where something lives.
+canon_path(){ case "$1" in /System/Volumes/Data/*) printf '%s\n' "${1#/System/Volumes/Data}";; *) printf '%s\n' "$1";; esac; }
+is_system_path(){ case "$1" in /System/Volumes/Data/*) return 1;; /System/*|/usr/libexec/*|/usr/sbin/*|/sbin/*|/bin/*|/usr/bin/*|/Library/Apple/*) return 0;; esac; return 1; }
 is_dev_path(){ case "$1" in /opt/homebrew/*|/usr/local/Cellar/*|/usr/local/bin/*|"$UH"/.nvm/*|"$UH"/.bun/*|"$UH"/.cargo/*|"$UH"/.rustup/*|"$UH"/.local/*|"$UH"/.npm/*|"$UH"/go/*|"$UH"/.orbstack/*|*/node_modules/*|*/target/debug/*|*/target/release/*) return 0;; esac; return 1; }
 
 sig(){

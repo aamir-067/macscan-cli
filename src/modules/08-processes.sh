@@ -13,10 +13,10 @@ ps -axo comm= | sort -u | while IFS= read -r p; do is_system_path "$p" && contin
 
 section "Processes running from unusual locations"
 ps -axo pid=,user=,comm= | while read -r pid _ path; do
-  case "$path" in
+  case "$(canon_path "$path")" in
     "$ROOT"/*) ;;
     "$UH"/.nvm/*|"$UH"/.bun/*|"$UH"/.cargo/*|"$UH"/.rustup/*|"$UH"/.orbstack/*|"$UH"/.antigravity*|"$UH"/.vscode/*|"$UH"/.cursor/*|"$UH"/.local/*|"$UH"/.opencode/*|"$UH"/.npm/*) echo "dev path: pid $pid $path";;
-    /tmp/*|/private/tmp/*|/private/var/folders/*|/Users/Shared/*|/var/tmp/*|/private/var/tmp/*) echo "TEMP: pid $pid $path"; flag "Process running from a temp or shared folder: pid $pid $path";;
+    /tmp/*|/private/tmp/*|/private/var/folders/*|/var/folders/*|/Users/Shared/*|/var/tmp/*|/private/var/tmp/*) echo "TEMP: pid $pid $path"; flag "Process running from a temp or shared folder: pid $pid $path";;
     "$UH"/.*) echo "HIDDEN: pid $pid $path"; flag "Process running from a hidden folder in home: pid $pid $path";;
     "$UH/Downloads/"*|"$UH/Desktop/"*|"$UH/Documents/"*) echo "user folder: pid $pid $path";;
   esac
