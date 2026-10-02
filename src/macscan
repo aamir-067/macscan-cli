@@ -17,6 +17,7 @@ SCANNING
   macscan --no-clamav          Skip the ClamAV scan
   macscan --clamav-full        ClamAV scans your whole home folder (slow)
   macscan --no-logs            Skip the unified log module
+  macscan --include-trash      Also scan the Trash (file sweep, YARA, ClamAV)
   macscan --output /full/path  Save this scan somewhere else
   macscan --only-if-findings   Delete the report if nothing suspicious is found
   macscan --always-report      Keep the report even when clean
@@ -75,17 +76,25 @@ follow(){
   return 0
 }
 
-set_config_raw(){ sed -i '' "s|^$1=.*|$1=\"$2\"|" "$ROOT/config"; }
+# Updates KEY="VALUE" in config, adding the key when an older config does not have it.
+set_config_raw(){
+  if grep -q "^$1=" "$ROOT/config"; then sed -i '' "s|^$1=.*|$1=\"$2\"|" "$ROOT/config"
+  else printf '%s="%s"\n' "$1" "$2" >> "$ROOT/config"; fi
+}
 set_config(){
   local k="${1%%=*}" v="${1#*=}"
   [ "$k" = "$1" ] && { echo "Usage: macscan --set KEY=VALUE (see macscan --config)"; return 1; }
-  case "$k" in REPORT_DIR|KEEP_REPORTS|MAX_AGE_DAYS|LOOKBACK_DAYS|AUTO_INTERVAL_DAYS|AUTO_ON_NEW_APP|AUTO_MIN_BATTERY|ONLY_IF_FINDINGS|NOTIFY|ZIP|YARA|CLAMAV|CLAMAV_SCOPE) ;;
+  case "$k" in REPORT_DIR|KEEP_REPORTS|MAX_AGE_DAYS|LOOKBACK_DAYS|AUTO_INTERVAL_DAYS|AUTO_ON_NEW_APP|AUTO_MIN_BATTERY|ONLY_IF_FINDINGS|NOTIFY|ZIP|YARA|CLAMAV|CLAMAV_SCOPE|INCLUDE_TRASH|SUPPLY_CHAIN|EXEC_MONITOR) ;;
     *) echo "Unknown setting: $k"; return 1;; esac
   case "$v" in ""|*[!A-Za-z0-9/_.\ -]*) echo "Invalid value: $v"; return 1;; esac
   case "$k" in KEEP_REPORTS|MAX_AGE_DAYS|LOOKBACK_DAYS|AUTO_INTERVAL_DAYS|AUTO_MIN_BATTERY)
     case "$v" in *[!0-9]*) echo "$k must be a number"; return 1;; esac
     [ "$k" = KEEP_REPORTS ] && [ "$v" -lt 1 ] && { echo "KEEP_REPORTS must be at least 1"; return 1; };;
   esac
+  case "$k" in AUTO_ON_NEW_APP|ONLY_IF_FINDINGS|ZIP|YARA|CLAMAV|INCLUDE_TRASH|SUPPLY_CHAIN|EXEC_MONITOR)
+    case "$v" in yes|no) ;; *) echo "$k must be yes or no"; return 1;; esac;; esac
+  case "$k" in NOTIFY) case "$v" in yes|no|dialog) ;; *) echo "NOTIFY must be yes, no or dialog"; return 1;; esac;; esac
+  case "$k" in CLAMAV_SCOPE) case "$v" in standard|full) ;; *) echo "CLAMAV_SCOPE must be standard or full"; return 1;; esac;; esac
   case "$k" in REPORT_DIR) case "$v" in /*) ;; *) echo "REPORT_DIR must be a full path"; return 1;; esac;; esac
   set_config_raw "$k" "$v"; echo "$k = $v"
 }
@@ -188,7 +197,7 @@ stop_scan(){
 validate(){
   while [ $# -gt 0 ]; do
     case "$1" in
-      --quick|--foreground|--no-yara|--no-clamav|--clamav-full|--no-logs|--only-if-findings|--always-report|--no-zip|--no-notify|--open) shift;;
+      --quick|--foreground|--no-yara|--no-clamav|--clamav-full|--no-logs|--only-if-findings|--always-report|--no-zip|--no-notify|--open|--include-trash) shift;;
       --days|--keep) case "${2:-}" in ''|*[!0-9]*) echo "$1 needs a number"; exit 2;; esac; shift 2;;
       --only|--skip) case "${2:-}" in ''|*[!0-9,]*) echo "$1 needs module numbers like 05,15"; exit 2;; esac; shift 2;;
       --output) case "${2:-}" in /*) ;; *) echo "--output needs a full path, e.g. /Users/you/Desktop/scans"; exit 2;; esac; shift 2;;

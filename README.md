@@ -169,6 +169,7 @@ Matching is by substring of the flag text, so be specific. Acknowledged flags st
 | `ZIP` | `yes` | Also save a zip of each report |
 | `YARA` / `CLAMAV` | `yes` | Run the YARA and ClamAV modules |
 | `CLAMAV_SCOPE` | `standard` | `standard` (user folders and launch locations) or `full` (whole home folder, slow) |
+| `INCLUDE_TRASH` | `no` | Also sweep the Trash with the file-system, YARA and ClamAV modules (`--include-trash` for one scan) |
 
 ## How it stays safe
 

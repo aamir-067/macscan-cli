@@ -8,6 +8,8 @@ umask 077
 [ "$EUID" -eq 0 ] || { echo "Must run as root."; exit 1; }
 # shellcheck source=/dev/null
 source "$ROOT/config"
+# Settings added after 2.0 may be missing from an older config file.
+: "${INCLUDE_TRASH:=no}" "${SUPPLY_CHAIN:=no}" "${EXEC_MONITOR:=no}" "${NOTIFY:=yes}"
 # shellcheck disable=SC2034  # used by core/lib/rules.sh
 YARAC=/opt/homebrew/bin/yarac
 # shellcheck disable=SC2034
@@ -39,7 +41,7 @@ UID_N="$(id -u "$U" 2>/dev/null)"; export UID_N
 [ -n "$UID_N" ] || { echo "User $U not found."; exit 1; }
 UH="$(dscl . -read "/Users/$U" NFSHomeDirectory 2>/dev/null | sed -n 's/^NFSHomeDirectory: //p' | head -1)"; export UH
 [ -d "$UH" ] || { echo "Home folder of $U not found."; exit 1; }
-export DAYS QUICK CLAM_SCOPE OUTBASE ROOT STATE
+export DAYS QUICK CLAM_SCOPE OUTBASE ROOT STATE INCLUDE_TRASH SUPPLY_CHAIN
 export RUN="" INV=""
 # shellcheck source=common.sh
 source "$ROOT/core/common.sh"

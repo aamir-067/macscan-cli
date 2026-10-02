@@ -28,6 +28,7 @@ options_parse(){
       --no-zip) DO_ZIP=no; shift;;
       --no-notify) DO_NOTIFY=no; shift;;
       --open) OPEN=1; shift;;
+      --include-trash) INCLUDE_TRASH=yes; shift;;
       --task) TASK="${2:-}"; shift 2;;
       *) echo "Unknown option: $1 (see macscan --help)"; return 2;;
     esac

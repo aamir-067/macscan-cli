@@ -3,7 +3,7 @@
 # @quick  skip
 # shellcheck source=../core/common.sh
 source "$(dirname "$0")/../core/common.sh"
-PL=( \( -path "$UH/Library/CloudStorage" -o -path "$UH/Library/Caches" -o -path "$UH/Library/Containers" -o -path "$UH/Library/Group Containers" -o -path "$UH/Library/Developer" -o -path /Library/Caches -o -path /Library/Developer -o -path "$UH/.orbstack" -o -path "$UH/.Trash" -o -path "$OUTBASE" -o -name node_modules -o -name .git -o -path "$UH/.npm" -o -path "$UH/.cache" -o -path "$UH/.rustup" -o -path "$UH/.cargo" -o -path "$UH/.nvm" -o -path "$UH/.bun" -o -path "$UH/.gradle" -o -path "$UH/go" -o -name "*.app" -o -name DerivedData -o -name .next \) -prune -o )
+PL=( \( -path "$UH/Library/CloudStorage" -o -path "$UH/Library/Caches" -o -path "$UH/Library/Containers" -o -path "$UH/Library/Group Containers" -o -path "$UH/Library/Developer" -o -path /Library/Caches -o -path /Library/Developer -o -path "$UH/.orbstack" -o -path "$TRASHP" -o -path "$OUTBASE" -o -name node_modules -o -name .git -o -path "$UH/.npm" -o -path "$UH/.cache" -o -path "$UH/.rustup" -o -path "$UH/.cargo" -o -path "$UH/.nvm" -o -path "$UH/.bun" -o -path "$UH/.gradle" -o -path "$UH/go" -o -name "*.app" -o -name DerivedData -o -name .next \) -prune -o )
 
 section "Hidden files and folders in home"
 ls -laT "$UH" | grep -E ' \.[^. ]'

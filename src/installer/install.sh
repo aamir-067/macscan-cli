@@ -103,6 +103,9 @@ ZIP="yes"
 YARA="yes"
 CLAMAV="yes"
 CLAMAV_SCOPE="standard"
+INCLUDE_TRASH="no"
+SUPPLY_CHAIN="no"
+EXEC_MONITOR="no"
 EOF_CONFIG
 fi
 sed -i '' "s|^TARGET_USER=.*|TARGET_USER=\"$U\"|" "$ROOT/config"

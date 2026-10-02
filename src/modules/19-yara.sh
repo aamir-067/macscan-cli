@@ -11,7 +11,8 @@ section "YARA malware rule scan (runs as $U, never as root)"
 echo "YARA $(sudo -u "$U" "$Y" --version) | rule sets: $(cat "$ROOT/rules/sets.txt" 2>/dev/null)"
 T=()
 for d in "$UH"/* "$UH"/.[!.]*; do
-  case "$(basename "$d")" in Library|Movies|Music|Pictures|.Trash|.orbstack|.npm|.cache|.gradle|.rustup|.cargo|.bun|.android|.m2|.pub-cache|.cocoapods|.docker|go) continue;; esac
+  case "$(basename "$d")" in Library|Movies|Music|Pictures|.orbstack|.npm|.cache|.gradle|.rustup|.cargo|.bun|.android|.m2|.pub-cache|.cocoapods|.docker|go) continue;; esac
+  [ "$d" = "$TRASHP" ] && continue
   [ -e "$d" ] && T+=("$d")
 done
 T+=("$UH/Library/LaunchAgents" "$AS" "$UH/Library/Scripts" /Library/LaunchAgents /Library/LaunchDaemons "/Library/Application Support" /Library/PrivilegedHelperTools /Library/Security/SecurityAgentPlugins /Users/Shared /private/tmp /private/var/tmp)

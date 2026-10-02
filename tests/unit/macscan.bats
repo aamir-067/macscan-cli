@@ -79,3 +79,17 @@ teardown(){ drop_env; }
   run ack_add "escape text here" --reason "$(printf 'r\033[2J')"; [ "$status" -eq 1 ]
   [ ! -s "$ACK" ]
 }
+
+@test "--set adds a key that an older config file does not have" {
+  run set_config INCLUDE_TRASH=yes
+  [ "$status" -eq 0 ]
+  grep -qx 'INCLUDE_TRASH="yes"' "$ROOT/config"
+  run set_config INCLUDE_TRASH=no
+  [ "$(grep -c '^INCLUDE_TRASH=' "$ROOT/config")" = 1 ]
+}
+
+@test "--set checks yes/no and enumerated values" {
+  run set_config ZIP=maybe; [ "$status" -eq 1 ]
+  run set_config NOTIFY=dialog; [ "$status" -eq 0 ]
+  run set_config CLAMAV_SCOPE=everything; [ "$status" -eq 1 ]
+}

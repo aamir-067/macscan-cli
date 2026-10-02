@@ -55,3 +55,9 @@ setup(){
   run options_parse --task rm; [ "$status" -eq 2 ]
   run options_parse --output /Users/x/../../etc; [ "$status" -eq 2 ]
 }
+
+@test "--include-trash turns on the Trash sweep" {
+  INCLUDE_TRASH=no
+  options_parse --include-trash
+  [ "$INCLUDE_TRASH" = yes ]
+}

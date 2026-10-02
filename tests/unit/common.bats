@@ -118,3 +118,9 @@ teardown(){ drop_env; }
   [ "$(canon_path /System/Volumes/Data/private/tmp/evil)" = /private/tmp/evil ]
   [ "$(canon_path /usr/bin/true)" = /usr/bin/true ]
 }
+
+@test "the Trash is pruned unless INCLUDE_TRASH=yes" {
+  [ "$TRASHP" = "$UH/.Trash" ]
+  run bash -c 'INCLUDE_TRASH=yes; source "$1/core/common.sh"; echo "$TRASHP"' _ "$SRC"
+  [ "$output" != "$UH/.Trash" ]
+}
