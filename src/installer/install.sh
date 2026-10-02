@@ -77,7 +77,7 @@ fi
 
 umask 022
 mkdir -p "$ROOT/bin" "$ROOT/rules"
-mkdir -p -m 700 "$ROOT/state"; mkdir -p "$ROOT/state/inv"
+[ -d "$ROOT/state" ] || mkdir -m 700 "$ROOT/state"; chmod 700 "$ROOT/state"; mkdir -p "$ROOT/state/inv"
 # Replace code folders completely so files removed in this version do not linger.
 rm -rf "$ROOT/core" "$ROOT/modules" "$ROOT/helper" "$ROOT/src"
 ( cd "$STAGE" && find . -type f ) | while IFS= read -r f; do
