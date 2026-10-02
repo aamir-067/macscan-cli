@@ -53,3 +53,19 @@ setup_file(){
 @test "installer edits the user's .zshrc as the user, never as root" {
   not grep -nE '^[^#]*sed -i .*\.zshrc' <(grep -v 'sudo -u "\$U" sed -i' "$OUTDIR/install-mac-triage.sh")
 }
+
+@test "CHANGELOG has an entry for the current version" {
+  grep -q "^## \[$(cat "$REPO/VERSION")\] - [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}$" "$REPO/CHANGELOG.md"
+}
+
+@test "bump-version moves unreleased notes under the new version" {
+  cp -R "$REPO/scripts" "$REPO/VERSION" "$REPO/CHANGELOG.md" "$BATS_TEST_TMPDIR/"
+  mkdir -p "$BATS_TEST_TMPDIR/r"; mv "$BATS_TEST_TMPDIR/scripts" "$BATS_TEST_TMPDIR/VERSION" "$BATS_TEST_TMPDIR/CHANGELOG.md" "$BATS_TEST_TMPDIR/r/"
+  echo "1.2.3" > "$BATS_TEST_TMPDIR/r/VERSION"
+  perl -0pi -e 's/## \[Unreleased\]\n/## [Unreleased]\n### Fixed\n- thing\n/' "$BATS_TEST_TMPDIR/r/CHANGELOG.md"
+  "$BATS_TEST_TMPDIR/r/scripts/bump-version.sh" minor >/dev/null
+  [ "$(cat "$BATS_TEST_TMPDIR/r/VERSION")" = 1.3.0 ]
+  grep -q '^## \[1.3.0\] - ' "$BATS_TEST_TMPDIR/r/CHANGELOG.md"
+  [ "$(grep -A3 '^## \[1.3.0\]' "$BATS_TEST_TMPDIR/r/CHANGELOG.md" | grep -c 'thing')" = 1 ]
+  grep -q '^\[Unreleased\]: .*compare/v1.3.0...HEAD$' "$BATS_TEST_TMPDIR/r/CHANGELOG.md"
+}

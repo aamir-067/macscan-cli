@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: write        # create the GitHub release
+      id-token: write        # sign the build provenance
+      attestations: write    # store the build provenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Tag must match VERSION
+        run: test "${GITHUB_REF_NAME#v}" = "$(cat VERSION)"
+
+      - name: Install test tools
+        run: brew install shellcheck bats-core yara
+
+      - name: Test and build
+        run: make check
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/install-mac-triage.sh
+            dist/mac-triage-*.tar.gz
+
+      - name: Release notes from CHANGELOG
+        run: |
+          v="$(cat VERSION)"
+          awk -v v="$v" 'index($0, "## [" v "]") == 1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          test -s notes.md
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/install-mac-triage.sh dist/mac-triage-*.tar.gz dist/SHA256SUMS \
+            --title "mac-triage ${GITHUB_REF_NAME#v}" --notes-file notes.md --verify-tag

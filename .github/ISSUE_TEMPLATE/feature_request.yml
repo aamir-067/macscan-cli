@@ -1,0 +1,19 @@
+name: Feature or detection request
+description: A new check, module, or improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should mac-triage detect or do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does it matter?
+      description: Links to write-ups of the malware family or technique help a lot.
+  - type: textarea
+    id: how
+    attributes:
+      label: Where does the evidence live on disk or in system state?

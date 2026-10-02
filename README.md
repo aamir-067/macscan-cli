@@ -71,6 +71,12 @@ less install-mac-triage.sh                        # it is readable; nothing is e
 sudo bash install-mac-triage.sh
 ```
 
+Releases are built by GitHub Actions from a tagged commit. With the GitHub CLI you can also verify that provenance:
+
+```bash
+gh attestation verify install-mac-triage.sh --repo aamir-067/mac-triage
+```
+
 To see exactly which files would be installed without running anything as root:
 
 ```bash
