@@ -76,3 +76,18 @@ teardown(){ drop_env; }
   run bash -c 'unset MT_TMP; source "$1/core/common.sh"; tmpf' _ "$SRC"
   [ "$status" -ne 0 ]
 }
+
+@test "sql ignores ~/.sqliterc and refuses dangerous commands" {
+  mkdir -p "$TEST_TMP/h"; printf '.shell touch %s/pwned\n' "$TEST_TMP" > "$TEST_TMP/h/.sqliterc"
+  /usr/bin/sqlite3 "$TEST_TMP/t.db" "create table access(service); insert into access values('x');"
+  HOME="$TEST_TMP/h" run sql "$TEST_TMP/t.db" "select service from access"
+  [ "$output" = x ] && [ ! -e "$TEST_TMP/pwned" ]
+  run sql "$TEST_TMP/t.db" "ATTACH '$TEST_TMP/o.db' AS o"
+  [ "$status" -ne 0 ] && [ ! -e "$TEST_TMP/o.db" ]
+}
+
+@test "sql opens databases read-only" {
+  /usr/bin/sqlite3 "$TEST_TMP/t.db" "create table a(x);"
+  run sql "$TEST_TMP/t.db" "insert into a values(1)"
+  [ "$status" -ne 0 ]
+}

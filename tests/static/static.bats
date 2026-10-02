@@ -47,3 +47,13 @@ scripts(){ echo "$SRC/macscan"; ls "$SRC"/core/*.sh "$SRC"/core/lib/*.sh "$SRC"/
   run grep -nE '/tmp/mactriage|mktemp /tmp|> */tmp/|2> */tmp/' "$SRC/core/run.sh" "$SRC"/core/lib/*.sh "$SRC/core/common.sh" "$SRC"/modules/*.sh "$SRC/installer/install.sh"
   [ "$(echo "$output" | grep -v 'mktemp -d ' | grep -v 'case "\$utmp"' | grep -c .)" = 0 ] || { echo "$output"; return 1; }
 }
+
+@test "modules use the hardened sql wrapper, never sqlite3 directly" {
+  run grep -nE '(^|[^-])sqlite3 ' "$SRC"/modules/*.sh
+  [ "$(echo "$output" | grep -v 'grep -aiE' | grep -c .)" = 0 ] || { echo "$output"; return 1; }
+}
+
+@test "the root engine and CLI reset HOME" {
+  grep -q 'HOME=/var/root' "$SRC/core/run.sh"
+  grep -q 'env -i MACSCAN_CLEAN_ENV=1 .*HOME=/var/root' "$SRC/macscan"
+}

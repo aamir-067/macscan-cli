@@ -1,8 +1,9 @@
 #!/bin/bash
 # mac-triage scan engine. Runs as root and only reads.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"; STATE="$ROOT/state"; VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo unknown)"
-export PATH="/usr/bin:/bin:/usr/sbin:/sbin" LC_ALL=C
-unset PERL5LIB PERLLIB PERL5OPT BASH_ENV ENV
+# Root must not pick up the invoking user's environment or dotfiles (~/.sqliterc, ~/.digrc, ...).
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin" LC_ALL=C HOME=/var/root
+unset PERL5LIB PERLLIB PERL5OPT BASH_ENV ENV PYTHONPATH PYTHONSTARTUP SQLITE_HISTORY TMPDIR CDPATH GLOBIGNORE
 umask 077
 [ "$EUID" -eq 0 ] || { echo "Must run as root."; exit 1; }
 # shellcheck source=/dev/null

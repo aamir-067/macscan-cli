@@ -63,8 +63,8 @@ section "Saved passwords and cards per browser profile (counts only, no contents
 chromium_ext_dirs | while IFS= read -r ed; do
   pd=$(dirname "$ed"); ld="$pd/Login Data"; [ -f "$ld" ] || continue
   T=$(tmpf)
-  cp "$ld" "$T" 2>/dev/null; n=$(sqlite3 "$T" "select count(*) from logins" 2>/dev/null)
-  c=""; [ -f "$pd/Web Data" ] && { cp "$pd/Web Data" "$T" 2>/dev/null; c=$(sqlite3 "$T" "select count(*) from credit_cards" 2>/dev/null); }
+  cp "$ld" "$T" 2>/dev/null; n=$(sql "$T" "select count(*) from logins" 2>/dev/null)
+  c=""; [ -f "$pd/Web Data" ] && { cp "$pd/Web Data" "$T" 2>/dev/null; c=$(sql "$T" "select count(*) from credit_cards" 2>/dev/null); }
   rm -f "$T"
   echo "${pd#"$AS"/} | saved logins: ${n:-?} | saved cards: ${c:-?}"
 done

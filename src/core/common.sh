@@ -13,6 +13,9 @@ asuser(){ launchctl asuser "$UID_N" sudo -H -u "$U" "$@"; }
 tmo(){ local t="$1"; shift; perl -e 'alarm shift; exec @ARGV' "$t" "$@"; }
 # Temp files go in the scan's private folder (MT_TMP, root-only, inside state/).
 # Never use the shared /tmp: another process can predict a name there and plant a symlink.
+# SQLite as root on files a user can create: skip ~/.sqliterc, use safe mode (no .shell,
+# ATTACH, extensions or file I/O functions) and open read-only.
+sql(){ /usr/bin/sqlite3 -noinit -safe -readonly "$@"; }
 tmpf(){ mktemp "${MT_TMP:?}/t.XXXXXX"; }
 sha(){ shasum -a 256 "$1" 2>/dev/null | awk '{print substr($1,1,16)}'; }
 is_self(){ case "$1" in "$ROOT"/*|*com.mactriage.*) return 0;; esac; return 1; }

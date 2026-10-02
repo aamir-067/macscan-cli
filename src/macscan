@@ -190,6 +190,11 @@ list_modules(){
 main(){
 case "${1:-}" in -h|--help|help) usage; exit 0;; -v|--version) echo "macscan $VERSION"; exit 0;; esac
 [ "$EUID" -ne 0 ] && exec sudo "$ROOT/macscan" "$@"
+# Start over with a minimal environment so nothing from the caller (HOME, PERL5OPT, ...) reaches root.
+if [ "${MACSCAN_CLEAN_ENV:-}" != 1 ]; then
+  exec /usr/bin/env -i MACSCAN_CLEAN_ENV=1 PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root LANG=en_US.UTF-8 \
+    TERM="${TERM:-dumb}" SUDO_USER="${SUDO_USER:-}" /bin/bash "$ROOT/macscan" "$@"
+fi
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
 # shellcheck source=/dev/null
 source "$ROOT/config"
