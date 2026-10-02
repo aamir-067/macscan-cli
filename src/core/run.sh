@@ -75,7 +75,8 @@ fi
 
 lock_acquire || { echo "A scan is already running."; exit 3; }
 trap 'execmon_stop; lock_release; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
-rm -rf "$STATE/work" "$STATE/tmp"
+# Leftovers from a run that was killed before it could clean up.
+rm -rf "$STATE/work" "$STATE/tmp" "$STATE"/inv/new_*
 MT_TMP="$STATE/tmp"; mkdir -m 700 "$MT_TMP"; export MT_TMP
 trap 'echo; echo "Scan stopped by request."; echo "$(date "+%F %T") | $MODE | stopped | $REASON" >> "$HIST"; exit 130' TERM INT
 exec > >(tee "$LOG") 2>&1
