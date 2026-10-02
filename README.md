@@ -165,7 +165,7 @@ Matching is by substring of the flag text, so be specific. Acknowledged flags st
 | `AUTO_ON_NEW_APP` | `yes` | Scan when a new app is installed |
 | `AUTO_MIN_BATTERY` | `30` | Postpone automatic scans below this battery percentage |
 | `ONLY_IF_FINDINGS` | `no` | Delete clean reports |
-| `NOTIFY` | `yes` | Show a notification when a scan ends |
+| `NOTIFY` | `yes` | `yes`: notification when a scan ends; `dialog`: a dialog with an **Open report** button; `no`: nothing |
 | `ZIP` | `yes` | Also save a zip of each report |
 | `YARA` / `CLAMAV` | `yes` | Run the YARA and ClamAV modules |
 | `CLAMAV_SCOPE` | `standard` | `standard` (user folders and launch locations) or `full` (whole home folder, slow) |

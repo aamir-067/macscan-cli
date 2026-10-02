@@ -69,3 +69,8 @@ scripts(){ echo "$SRC/macscan"; ls "$SRC"/core/*.sh "$SRC"/core/lib/*.sh "$SRC"/
   run grep -nE '^[[:space:]]*! |^[[:space:]]*\[\[ .*\]\][[:space:]]*$|do \[\[ [^|]*\]\]; done' "$REPO"/tests/*/*.bats
   [ "$status" -eq 1 ] || { echo "$output"; return 1; }
 }
+
+@test "the report dialog opens the file with open(1), never through do shell script" {
+  grep -q '"Open report"' "$SRC/core/lib/notify.sh"
+  not grep -q 'do shell script' "$SRC/core/lib/notify.sh"
+}

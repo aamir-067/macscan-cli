@@ -130,7 +130,7 @@ REPORT="$RUN/FULL-REPORT_${STAMP}.txt"
 { cat "$SUM"; for f in "$RUN"/modules/*.txt; do echo; echo; cat "$f"; done; } > "$REPORT"
 
 if [ "$OIF" = yes ] && [ "$NFLAGS" -eq 0 ]; then RESULT="clean, report not kept"; REPORT=""
-elif deliver_report; then RESULT="report: $OUTBASE/$NAME"; REPORT="$OUTBASE/$NAME/$(basename "$REPORT")"
+elif deliver_report; then RESULT="report: $OUTBASE/$NAME"; REPORT="$OUTBASE/$NAME/$(basename "$REPORT")"; SUMMARY="$OUTBASE/$NAME/$(basename "$SUM")"
 else
   mkdir -p "$STATE/undelivered"; rm -rf "${STATE:?}/undelivered/$NAME"; mv "$RUN" "$STATE/undelivered/$NAME"
   RESULT="report could not be saved in $OUTBASE. It is kept (root only) in $STATE/undelivered/$NAME"; REPORT=""
@@ -142,7 +142,7 @@ cleanup_reports
 MINS=$(( ($(date +%s)-T0)/60 ))
 echo "$(date '+%F %T') | $MODE | $REASON | flags: $NFLAGS | $MINS min | $RESULT" | one_line >> "$HIST"; echo >> "$HIST"
 echo; echo "Finished in $MINS minutes. Red flags: $NFLAGS"; echo "$RESULT"
-if [ "$NFLAGS" -gt 0 ]; then notify "Mac scan: $NFLAGS red flags" "Critical $N_CRIT, high $N_HIGH. Report saved in $(basename "$OUTBASE")"
-else notify "Mac scan complete" "No red flags found."; fi
+if [ "$NFLAGS" -gt 0 ]; then notify "Mac scan: $NFLAGS red flags" "Critical $N_CRIT, high $N_HIGH. Report saved in $(basename "$OUTBASE")" "${SUMMARY:-}"
+else notify "Mac scan complete" "No red flags found." "${SUMMARY:-}"; fi
 [ "$OPEN" = 1 ] && [ -n "$REPORT" ] && launchctl asuser "$UID_N" sudo -u "$U" /usr/bin/open "$REPORT"
 echo "@@DONE@@"

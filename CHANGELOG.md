@@ -8,6 +8,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - `macscan --set` now adds a setting that is missing from an older config file (it used to do nothing), and checks yes/no and enumerated values.
 
 ### Added
+- `NOTIFY=dialog`: at the end of a scan, a dialog with an **Open report** button that opens the summary (P3-2).
 - `--include-trash` and `INCLUDE_TRASH=yes`: the file-system sweep, YARA and ClamAV also cover the Trash (P2-4).
 - Severity for every flag (critical, high, medium, low) from a central rubric in `core/lib/severity.sh`. The summary shows counts per severity and lists the most severe first as `[HIGH] [module] message`; the flag text after the severity tag is unchanged. New inventory items in persistence-type categories are high, others medium.
 - `macscan --ignore "<text>" --reason "<why>"`, `--ignored` and `--unignore <text|N>`: acknowledged flags are stored root-only with date and reason, listed in an "Acknowledged" section of the summary and not counted (P1-1).
