@@ -1,0 +1,31 @@
+# ------------------------------------------------------------------
+# Private workspace files. These stay on this machine and are never
+# published: AI assistant instructions, plans, incident notes, triage
+# procedures tied to one machine, and scan reports (personal data).
+# ------------------------------------------------------------------
+CLAUDE.md
+.claude/
+setup.sh
+docs/roadmap.md
+docs/threat-model.md
+docs/known-flags.md
+docs/report-triage.md
+docs/remediation-playbook.md
+reports/
+mac-triage-quarantine/
+
+# Legacy single-file installer (replaced by src/ + scripts/build.sh)
+/install-mac-triage.sh
+
+# Build output
+dist/
+*.zip
+
+# Test scratch
+tests/.tmp/
+
+# OS and editor noise
+.DS_Store
+*.swp
+.vscode/
+.idea/
