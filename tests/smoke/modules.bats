@@ -32,3 +32,4 @@ smoke(){
   run grep -E "Suspicious command|Task auto-runs|Injected malware marker|Non-default package registry" "$RUN/.flags.raw"
   [ "$status" -eq 1 ]
 }
+@test "21 plaintext secrets runs cleanly" { smoke 21 120; }

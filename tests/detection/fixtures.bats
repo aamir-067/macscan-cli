@@ -105,3 +105,20 @@ yara_rules(){
   mod 16
   grep -qF "Git setting that can run commands (verify): $UH/.gitconfig:	pager = less -R" "$RUN/.flags.raw"
 }
+
+@test "21 flags password exports, stray keys and .env files by path only" {
+  mkdir -p "$UH/Downloads" "$UH/Desktop" "$UH/Documents/app" "$UH/Documents/notes"
+  printf 'name,url,username,password\nx,https://x,u,%s\n' "pw-not-real" > "$UH/Downloads/export.csv"
+  printf '%s\nabc\n' "-----BEGIN OPENSSH PRI""VATE KEY-----" > "$UH/Desktop/server.pem"
+  printf 'TOKEN=x\n' > "$UH/Desktop/.env"
+  printf 'TOKEN=x\n' > "$UH/Documents/app/.env"; echo '{}' > "$UH/Documents/app/package.json"
+  printf 'x\n' > "$UH/Documents/notes/bank passwords.txt"
+  printf 'a,b\n1,2\n' > "$UH/Downloads/data.csv"
+  mod 21
+  grep -qxF "[21] Plaintext password export on disk: $UH/Downloads/export.csv" "$RUN/.flags.raw"
+  grep -qxF "[21] Private key file outside ~/.ssh: $UH/Desktop/server.pem" "$RUN/.flags.raw"
+  grep -qxF "[21] .env file outside a project: $UH/Desktop/.env" "$RUN/.flags.raw"
+  grep -qxF "[21] Possible password file (by name): $UH/Documents/notes/bank passwords.txt" "$RUN/.flags.raw"
+  not grep -q "app/.env\|data.csv" "$RUN/.flags.raw"
+  not grep -q "pw-not-real\|abc" <<<"$output"
+}
