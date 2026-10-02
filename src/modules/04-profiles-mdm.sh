@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Configuration profiles and MDM
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Configuration profiles and MDM"
 profiles status -type enrollment 2>&1
 p=$(profiles list -all 2>&1); echo "$p"

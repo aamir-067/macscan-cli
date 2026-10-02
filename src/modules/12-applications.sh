@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Installed applications and packages
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Installed applications (signature, notarization, install date)"
 find /Applications "$UH/Applications" -maxdepth 3 -name "*.app" -not -path "*.app/*" 2>/dev/null | sort | while IFS= read -r a; do
   gk=$(spctl -a -vv "$a" 2>&1); src=$(echo "$gk" | awk -F= '/source=/{print $2}')

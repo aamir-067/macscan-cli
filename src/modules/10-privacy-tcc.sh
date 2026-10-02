@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Privacy permissions (TCC)
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 CUT="CAST(strftime('%s','now','-$DAYS days') AS INTEGER)"
 section "Locating privacy (TCC) databases"
 DBS=()

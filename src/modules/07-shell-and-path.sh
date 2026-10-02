@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Shell startup files and command hijacking
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Shell startup files (user and root)"
 RCS=("$UH"/.zshrc "$UH"/.zshenv "$UH"/.zprofile "$UH"/.zlogin "$UH"/.zlogout "$UH"/.bashrc "$UH"/.bash_profile "$UH"/.bash_login "$UH"/.profile "$UH"/.inputrc /var/root/.zshrc /var/root/.zshenv /var/root/.bashrc /var/root/.profile /var/root/.bash_profile /etc/zshenv /etc/zshrc /etc/zprofile /etc/zlogin /etc/profile /etc/bashrc)
 for f in "${RCS[@]}"; do

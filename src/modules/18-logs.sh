@@ -1,5 +1,9 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Unified logs, install log, crash reports
+# @quick  skip
+# @toggle LOGS
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 q(){ local title="$1" last="$2" pred="$3" n="${4:-80}"; sub "$title (last $last)"; tmo 420 log show --last "$last" --style compact --predicate "$pred" 2>/dev/null | tail -"$n"; }
 section "Unified log (macOS keeps days to weeks of history)"
 q "XProtect Remediator results" 30d 'subsystem == "com.apple.XProtectFramework.PluginAPI" AND category == "XPEvent.structured"'

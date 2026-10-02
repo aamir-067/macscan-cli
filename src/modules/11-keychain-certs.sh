@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Keychains and certificate trust
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Keychains"
 asuser security list-keychains
 ls -laT "$UH/Library/Keychains" /Library/Keychains 2>/dev/null

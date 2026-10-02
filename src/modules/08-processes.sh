@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Running processes
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Process tree"
 ps -axo pid=,ppid=,user=,etime=,command= | perl -e '
   while(<STDIN>){ my($p,$pp,$u,$e,$c)=/^\s*(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(.*)$/ or next; $cmd{$p}="$u [$e] ".substr($c,0,170); push @{$k{$pp}},$p; }

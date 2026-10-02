@@ -1,6 +1,6 @@
 #!/bin/bash
 # mac-triage shared helpers. Read-only.
-ROOT="/usr/local/mac-triage"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 export LC_ALL=C
 DAYS="${DAYS:-60}"; MODULE="${MODULE:-core}"
 AS="$UH/Library/Application Support"

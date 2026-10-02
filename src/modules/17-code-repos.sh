@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Code repositories (injected code, auto-run tasks, hooks)
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Known injected JavaScript markers"
 grep -rlF --exclude-dir=Library --exclude-dir=.Trash --exclude-dir=.git --exclude-dir=.orbstack --exclude-dir=.npm --exclude-dir=.cache --exclude-dir=.rustup --exclude-dir="$(basename "$OUTBASE")" --include="*.js" --include="*.cjs" --include="*.mjs" --include="*.ts" --include="*.jsx" --include="*.tsx" -e '_$_5ef4' -e '_$jsoIter' -e 'global[_$_' "$UH" 2>/dev/null | while IFS= read -r f; do echo "$f"; flag "Injected malware marker found: $f"; done
 

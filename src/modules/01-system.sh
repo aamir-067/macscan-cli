@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  System and security posture
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "System and security posture"
 sw_vers; uname -a; sysctl -n hw.model machdep.cpu.brand_string 2>/dev/null; uptime
 s=$(csrutil status 2>&1); sub "System Integrity Protection"; echo "$s"

@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Download history and file origins
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 QDB="$UH/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV2"
 CUT="CAST(strftime('%s','now','-$DAYS days') AS INTEGER)"
 section "Download history (quarantine database, last $DAYS days)"

@@ -1,5 +1,9 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  ClamAV antivirus scan
+# @quick  skip
+# @toggle CLAMAV
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 C=/opt/homebrew/bin/clamscan
 section "ClamAV antivirus scan (runs as $U, never as root)"
 [ -x "$C" ] || { echo "ClamAV is not installed, skipped."; exit 0; }

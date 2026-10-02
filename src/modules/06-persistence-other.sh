@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Persistence: cron, login hooks, extensions, PAM, plugins
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "cron and at"
 for u in $(dscl . list /Users | grep -v '^_'); do c=$(crontab -u "$u" -l 2>/dev/null); [ -n "$c" ] && { echo "[$u]"; echo "$c"; inv cron "$u $(echo "$c" | shasum | cut -c1-16)"; flag "crontab exists for $u"; }; done
 ls -la /usr/lib/cron/tabs /usr/lib/cron/jobs 2>/dev/null

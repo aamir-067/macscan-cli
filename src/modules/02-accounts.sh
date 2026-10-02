@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Accounts and admin rights
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Accounts and admin rights"
 sub "Local users (UID 0 and 500+)"
 dscl . list /Users UniqueID | awk '$2==0 || $2>=500' | while read -r n id; do echo "$n $id"; inv users "$n $id"; done

@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Network listeners, connections, proxy and DNS
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Listening sockets"
 lsof -nP -iTCP -sTCP:LISTEN
 lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR>1 && $9 !~ /^(127\.0\.0\.1|\[::1\]|localhost)/ {print $1, $2, $3, $9}' | sort -u | grep -vE "^(ControlCe|rapportd|sharingd|mDNSRespo|identitys|launchd|AirPlayXP)" | while read -r l; do inv listeners "$(echo "$l" | awk '{print $1}') network"; flag "Listener reachable from the network: $l"; done

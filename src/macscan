@@ -48,11 +48,6 @@ MAINTENANCE
 USAGE
 }
 
-case "${1:-}" in -h|--help|help) usage; exit 0;; -v|--version) echo "macscan $VERSION"; exit 0;; esac
-[ "$EUID" -ne 0 ] && exec sudo "$ROOT/macscan" "$@"
-export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
-source "$ROOT/config"
-CALLER="${SUDO_USER:-$TARGET_USER}"
 
 running_pid(){ local p; p=$(cat "$STATE/running.pid" 2>/dev/null); [ -n "$p" ] && kill -0 "$p" 2>/dev/null && echo "$p"; }
 fmt_ts(){ if [ "${1:-0}" -gt 0 ] 2>/dev/null; then date -r "$1" '+%F %H:%M'; else echo "never"; fi; }
@@ -187,6 +182,18 @@ uninstall(){
   echo "Optional: brew uninstall yara clamav"
 }
 
+list_modules(){
+  local m; for m in "$ROOT"/modules/*.sh; do printf "%-26s %s\n" "$(basename "$m" .sh)" "$(awk 'NR>20{exit} /^# @title /{sub(/^# @title +/,""); print; exit}' "$m")"; done
+}
+
+main(){
+case "${1:-}" in -h|--help|help) usage; exit 0;; -v|--version) echo "macscan $VERSION"; exit 0;; esac
+[ "$EUID" -ne 0 ] && exec sudo "$ROOT/macscan" "$@"
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+# shellcheck source=/dev/null
+source "$ROOT/config"
+CALLER="${SUDO_USER:-$TARGET_USER}"
+
 case "${1:-}" in
   --status) status;;
   --stop) stop_scan;;
@@ -201,10 +208,13 @@ case "${1:-}" in
   --clean) /bin/bash "$ROOT/core/run.sh" --task clean;;
   --update-rules) /bin/bash "$ROOT/core/run.sh" --task update-rules;;
   --check-fda) start_job --task check-fda;;
-  --modules) ls -1 "$ROOT/modules" | sed 's/\.sh$//';;
+  --modules) list_modules;;
   --config) grep -v '^#' "$ROOT/config";;
   --set) set_config "${2:-}";;
   --install-services) install_services;;
   --uninstall) uninstall;;
   *) start_job "$@";;
 esac
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then main "$@"; fi

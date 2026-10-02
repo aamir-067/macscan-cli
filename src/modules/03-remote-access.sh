@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Remote access and sharing
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Remote access and sharing"
 r=$(systemsetup -getremotelogin 2>/dev/null); sub "Remote Login (SSH server)"; echo "$r"
 echo "$r" | grep -q ": On" && { flag "Remote Login (SSH server) is ON"; inv remote "Remote Login on"; }

@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Persistence: launchd items and Background Task Management
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "launchd items: what they run and who signed it"
 for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAgents /var/root/Library/LaunchAgents /Library/StartupItems; do
   [ -d "$d" ] || continue

@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Browser extensions, policies and saved-credential counts
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Chromium-based browser extensions (found automatically)"
 chromium_ext_dirs | while IFS= read -r ed; do
   pd=$(dirname "$ed"); br=$(dirname "$pd"); bname=${br#"$AS"/}; prof=$(basename "$pd")

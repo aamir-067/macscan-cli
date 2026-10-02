@@ -1,5 +1,7 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  Developer environment and AI tools
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 section "Editor extensions (found automatically)"
 editor_ext_dirs | while IFS= read -r d; do
   sub "$d"

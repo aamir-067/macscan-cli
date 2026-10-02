@@ -1,5 +1,9 @@
 #!/bin/bash
-source /usr/local/mac-triage/core/common.sh
+# @title  YARA malware rule scan
+# @quick  skip
+# @toggle YARA
+# shellcheck source=../core/common.sh
+source "$(dirname "$0")/../core/common.sh"
 Y=/opt/homebrew/bin/yara; R="$ROOT/rules/all.yarc"
 section "YARA malware rule scan (runs as $U, never as root)"
 [ -x "$Y" ] || { echo "YARA is not installed, skipped."; exit 0; }
