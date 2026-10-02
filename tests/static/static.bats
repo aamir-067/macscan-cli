@@ -36,3 +36,8 @@ scripts(){ echo "$SRC/macscan"; ls "$SRC"/core/*.sh "$SRC"/core/lib/*.sh "$SRC"/
   run grep -nE 'chown (-R )?"\$U" "\$(RUN|OUTBASE)|ditto -c|rm -rf "\$d"|> *"\$OUTBASE|mkdir -p "\$OUTBASE' "$SRC/core/run.sh" "$SRC"/core/lib/*.sh "$SRC/core/common.sh"
   [ "$status" -eq 1 ] || { echo "$output"; return 1; }
 }
+
+@test "root never copies into, chowns or writes inside user-owned temp folders" {
+  run grep -nE 'chown "\$U"|cp [^|;]* "\$(tmp|utmp)/|> *"\$(tmp|utmp)/' "$SRC/core/run.sh" "$SRC"/core/lib/*.sh "$SRC/core/common.sh"
+  [ "$status" -eq 1 ] || { echo "$output"; return 1; }
+}
