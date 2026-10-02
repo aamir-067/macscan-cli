@@ -130,6 +130,7 @@ Reports are saved in `~/Documents/mac-triage-reports/scan_<date>_<mode>/` (plus 
 - `00-SUMMARY_<date>.txt`: red flags, then what is new or removed since the last scan. Start here.
 - `FULL-REPORT_<date>.txt`: the summary followed by every module's full output.
 - `modules/NN-name.txt`: one file per module.
+- `report.json`: the same findings for scripts and tools: severity, module, message, whether it is new since the last scan, whether it is acknowledged, and a `fingerprint` (first 16 hex characters of SHA-256 over `module|message`) that stays the same across scans while the flag text does.
 
 A flag line looks like `[05-persistence-launchd] Launch item runs from an unusual location: <plist> -> <target>`. Secrets that appear in configs or command lines (API keys, tokens, passwords, private keys, URL credentials) are masked before anything is written.
 

@@ -116,6 +116,7 @@ diff_inventories
 prepare_flags
 SUM="$RUN/00-SUMMARY_${STAMP}.txt"
 write_summary | redact > "$SUM"
+write_json > "$RUN/report.json"
 rm -f "$RUN/.flags.raw" "$RUN/.flags" "$RUN/.flags.tsv" "$NEWS"
 REPORT="$RUN/FULL-REPORT_${STAMP}.txt"
 { cat "$SUM"; for f in "$RUN"/modules/*.txt; do echo; echo; cat "$f"; done; } > "$REPORT"

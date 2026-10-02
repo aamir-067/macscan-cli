@@ -52,3 +52,25 @@ teardown(){ drop_env; }
   [[ "$output" == *"ACKNOWLEDGED (not counted): 1"* ]] || return 1
   [[ "$output" == *"acknowledged: known (since 2026-10-01)"* ]] || return 1
 }
+
+@test "report.json is valid, counts match and fingerprints are stable" {
+  source "$SRC/core/lib/severity.sh"; source "$SRC/core/common.sh"
+  printf '[17-code-repos] Injected malware marker found: /p.js\n[new since last scan] [launch] /L/x.plist | /tmp/x | ab\n[b] ignore me please\n' > "$RUN/.flags.raw"
+  printf '2026-10-01\tignore me please\tknown\n' > "$STATE/acknowledged.tsv"; : > "$NEWS"
+  VERSION=9.9.9 MODE=manual REASON=test FDA=yes T0=$(date +%s) ROOT="$SRC"
+  prepare_flags
+  write_json > "$TEST_TMP/r.json"
+  run /usr/bin/python3 -c '
+import json,sys
+d=json.load(open(sys.argv[1]))
+assert d["schema_version"]==1 and d["version"]=="9.9.9"
+assert d["counts"]=={"total":2,"critical":1,"high":1,"medium":0,"low":0,"acknowledged":1}, d["counts"]
+f={x["message"]:x for x in d["findings"]}
+assert f["/L/x.plist | /tmp/x | ab"]["category"]=="launch" and f["/L/x.plist | /tmp/x | ab"]["new_since_last_scan"]
+assert f["ignore me please"]["acknowledged"] and f["ignore me please"]["acknowledgement"].startswith("known")
+assert len(f["Injected malware marker found: /p.js"]["fingerprint"])==16
+print(f["Injected malware marker found: /p.js"]["fingerprint"])
+' "$TEST_TMP/r.json"
+  [ "$status" -eq 0 ] || { echo "$output"; return 1; }
+  [ "$output" = "$(printf '%s' '17-code-repos|Injected malware marker found: /p.js' | shasum -a 256 | cut -c1-16)" ]
+}

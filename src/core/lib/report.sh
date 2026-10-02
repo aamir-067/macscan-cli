@@ -68,3 +68,43 @@ write_summary(){
   echo "NEW OR REMOVED SINCE THE LAST SCAN"
   cat "$NEWS"
 }
+
+# write_json: prints report.json from $RUN/.flags.tsv (after prepare_flags).
+# Each finding has a fingerprint (first 16 hex of SHA-256 over "module|message"),
+# which stays the same across scans as long as the flag text does.
+write_json(){
+  MT_VERSION="$VERSION" MT_MODE="$MODE" MT_REASON="$REASON" MT_USER="$U" MT_DAYS="$DAYS" MT_FDA="$FDA" \
+  MT_DURATION=$(( $(date +%s) - T0 )) MT_SETS="$(cat "$ROOT/rules/sets.txt" 2>/dev/null)" \
+  MT_MODULES="$(ls "$RUN/modules" 2>/dev/null | sed 's/\.txt$//' | tr '\n' ' ')" \
+  perl -MJSON::PP -MDigest::SHA=sha256_hex -MPOSIX=strftime -e '
+    my (@f, %c);
+    $c{$_} = 0 for qw(critical high medium low acknowledged);
+    open(my $fh, "<", $ARGV[0]) or die;
+    while (my $l = <$fh>) {
+      chomp $l; my ($rank, $sev, $ack, $note, $line) = split /\t/, $l, 5;
+      next unless defined $line && length $line;
+      my ($module, $msg, $cat, $new) = ("", $line, undef, JSON::PP::false);
+      if ($line =~ /^\[new since last scan\] \[([^\]]+)\] (.*)$/) { ($module, $cat, $msg, $new) = ("inventory", $1, $2, JSON::PP::true) }
+      elsif ($line =~ /^\[([^\]]+)\] (.*)$/) { ($module, $msg) = ($1, $2) }
+      if ($ack) { $c{acknowledged}++ } else { $c{$sev}++ }
+      push @f, {
+        severity => $sev, module => $module, (defined $cat ? (category => $cat) : ()),
+        message => $msg, line => $line, new_since_last_scan => $new,
+        fingerprint => substr(sha256_hex("$module|" . (defined $cat ? "$cat|" : "") . $msg), 0, 16),
+        acknowledged => ($ack ? JSON::PP::true : JSON::PP::false),
+        acknowledgement => ($ack ? $note : undef),
+      };
+    }
+    my $total = 0; $total += $c{$_} for qw(critical high medium low);
+    my $doc = {
+      schema_version => 1, tool => "mac-triage", version => $ENV{MT_VERSION},
+      generated => strftime("%Y-%m-%dT%H:%M:%S%z", localtime),
+      mode => $ENV{MT_MODE}, reason => $ENV{MT_REASON}, user => $ENV{MT_USER},
+      lookback_days => 0 + $ENV{MT_DAYS}, full_disk_access => $ENV{MT_FDA},
+      duration_seconds => 0 + $ENV{MT_DURATION}, rule_sets => $ENV{MT_SETS},
+      modules => [ grep { length } split / /, $ENV{MT_MODULES} ],
+      counts => { total => $total, %c }, findings => \@f,
+    };
+    print JSON::PP->new->canonical->pretty->encode($doc);
+  ' "$RUN/.flags.tsv"
+}

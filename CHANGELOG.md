@@ -7,6 +7,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 ### Added
 - Severity for every flag (critical, high, medium, low) from a central rubric in `core/lib/severity.sh`. The summary shows counts per severity and lists the most severe first as `[HIGH] [module] message`; the flag text after the severity tag is unchanged. New inventory items in persistence-type categories are high, others medium.
 - `macscan --ignore "<text>" --reason "<why>"`, `--ignored` and `--unignore <text|N>`: acknowledged flags are stored root-only with date and reason, listed in an "Acknowledged" section of the summary and not counted (P1-1).
+- `report.json` beside the text report, with per-severity counts and one entry per finding including a stable fingerprint (P1-5).
 
 ## [2.1.0] - 2026-10-02
 
