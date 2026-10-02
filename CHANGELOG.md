@@ -9,6 +9,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - `macscan --ignore "<text>" --reason "<why>"`, `--ignored` and `--unignore <text|N>`: acknowledged flags are stored root-only with date and reason, listed in an "Acknowledged" section of the summary and not counted (P1-1).
 - `report.json` beside the text report, with per-severity counts and one entry per finding including a stable fingerprint (P1-5).
 - Install integrity check: the installer writes `manifest.sha256`; every scan and `macscan --verify` check hashes, unexpected files (for example an extra module), ownership and permissions of the install folder, and the LaunchDaemon definitions. Problems are critical flags (P1-7).
+- Module 13 classifies where recently downloaded programs, installers and archives came from (`kMDItemWhereFroms`, since macOS 27 quarantine rows have no URLs): chat attachments and link shorteners are high, file shares, GitHub releases (with the owner/repo to verify) and free hosting are medium (P1-3).
 
 ## [2.1.0] - 2026-10-02
 

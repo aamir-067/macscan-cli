@@ -64,6 +64,53 @@ redact(){ sanitize | perl -pe '
   s#(://[^:/\s]+:)[^@/\s]+@#$1<redacted>@#g;
 '; }
 
+# Download origins (macOS 27 leaves URLs out of the quarantine database, but each file
+# keeps kMDItemWhereFroms). origin_category <url> prints chat, shortener, fileshare,
+# github-release, hosting, or nothing.
+origin_category(){
+  local u host path
+  u=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
+  host=$(printf '%s' "$u" | sed -E 's#^[a-z][a-z0-9+.-]*://##; s#[/?\#].*$##; s#^.*@##; s#:[0-9]+$##')
+  path=$(printf '%s' "$u" | sed -E 's#^[a-z][a-z0-9+.-]*://[^/]*##')
+  case "$host" in
+    cdn.discordapp.com|media.discordapp.net|discord.com|t.me|telegram.org|*.telegram.org|cdn*.telesco.pe|web.whatsapp.com|*.whatsapp.net|files.slack.com|slack-files.com) echo chat;;
+    bit.ly|t.co|tinyurl.com|is.gd|cutt.ly|rebrand.ly|shorturl.at|rb.gy|t.ly|goo.gl|ow.ly|buff.ly|tiny.cc|s.id|v.gd|shorturl.gg) echo shortener;;
+    mega.nz|mega.io|*.mediafire.com|mediafire.com|*.dropbox.com|dropbox.com|*.dropboxusercontent.com|drive.google.com|drive.usercontent.google.com|wetransfer.com|*.wetransfer.com|we.tl|gofile.io|*.gofile.io|pixeldrain.com|anonfiles.com|*.sendspace.com|sendspace.com|*.4shared.com|transfer.sh|files.catbox.moe|catbox.moe|file.io|onedrive.live.com|1drv.ms|*.box.com|filebin.net|krakenfiles.com|uploadhaven.com) echo fileshare;;
+    objects.githubusercontent.com|release-assets.githubusercontent.com) echo github-release;;
+    github.com) case "$path" in /*/*/releases/download/*) echo github-release;; esac;;
+    *.pages.dev|*.vercel.app|*.netlify.app|*.github.io|*.glitch.me|*.ngrok.io|*.ngrok-free.app|*.ngrok.app|*.trycloudflare.com|raw.githubusercontent.com|gist.githubusercontent.com|*.web.app|*.firebaseapp.com|*.r2.dev|*.workers.dev) echo hosting;;
+  esac
+}
+
+# exec_like <file>: true for programs, installers, scripts and archives.
+exec_like(){
+  case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
+    *.dmg|*.pkg|*.mpkg|*.app|*.zip|*.tar|*.tgz|*.gz|*.bz2|*.xz|*.7z|*.rar|*.command|*.sh|*.tool|*.jar|*.iso|*.xip|*.scpt|*.applescript|*.terminal|*.workflow|*.py) return 0;;
+  esac
+  [ -f "$1" ] && [ -x "$1" ]
+}
+
+# origin_check <file> <url>...: flags an executable-like download by where it came from.
+origin_check(){
+  local f="$1" u c owner; shift
+  exec_like "$f" || return 0
+  for u in "$@"; do
+    c=$(origin_category "$u")
+    case "$c" in
+      chat) flag "Downloaded executable from a chat attachment: $f <- $u";;
+      shortener) flag "Downloaded executable from a link shortener: $f <- $u";;
+      fileshare) flag "Downloaded executable from a file-sharing site: $f <- $u";;
+      github-release)
+        owner=$(printf '%s' "$u" | sed -nE 's#^https?://github\.com/([^/]+/[^/]+)/releases/download/.*#\1#p')
+        flag "Downloaded executable from a GitHub release (verify the repository${owner:+ $owner}): $f <- $u";;
+      hosting) flag "Downloaded executable from a free hosting site: $f <- $u";;
+      *) continue;;
+    esac
+    return 0
+  done
+  return 0
+}
+
 # Folders never walked: cloud drives, VM disks, caches, dependency trees, our own reports
 PB=( -path "$UH/Library" -o -path "$UH/.Trash" -o -path "$UH/.orbstack" -o -path "$OUTBASE" -o -name node_modules -o -path "$UH/.npm" -o -path "$UH/.cache" -o -path "$UH/.gradle" -o -path "$UH/.rustup" -o -path "$UH/.cargo/registry" -o -path "$UH/go/pkg" -o -path "$UH/.bun/install" )
 PRUNE=( \( "${PB[@]}" -o -name .git \) -prune -o )
