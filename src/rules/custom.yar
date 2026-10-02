@@ -1,7 +1,7 @@
 rule MacTriage_JS_GlobalRequire_Loader
 {
   meta:
-    description = "Obfuscated JavaScript loader that exposes require/module globally (family found on this Mac)"
+    description = "Obfuscated JavaScript loader that exposes require/module globally (family seen injected into project repositories)"
     author = "mac-triage"
   strings:
     $g1 = /global\[_\$_[0-9a-f]{3,6}\[0x[0-9a-f]+\]\]\s*=\s*require/ ascii
