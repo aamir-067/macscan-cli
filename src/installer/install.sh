@@ -38,7 +38,28 @@ esac
 [ "$EUID" -eq 0 ] || { echo "Please run: sudo bash $0"; exit 1; }
 U="${SUDO_USER:-}"
 if [ -z "$U" ] || [ "$U" = root ]; then echo "Run this from your normal account using sudo."; exit 1; fi
-UH=$(dscl . -read "/Users/$U" NFSHomeDirectory | awk '{print $2}')
+case "$U" in *[!A-Za-z0-9._-]*) echo "Unsupported user name: $U"; exit 1;; esac
+[ "$(id -u "$U" 2>/dev/null || echo 0)" -ge 500 ] || { echo "$U is not a normal user account."; exit 1; }
+# Home folder paths can contain spaces, so take everything after the label.
+UH=$(dscl . -read "/Users/$U" NFSHomeDirectory 2>/dev/null | sed -n 's/^NFSHomeDirectory: //p' | head -1)
+[ -d "$UH" ] || { echo "Could not find the home folder of $U."; exit 1; }
+
+# Root will run these files on a schedule. Every folder on the way to them must be
+# owned by root and writable only by root, or a normal process could swap them out.
+safe_dir(){
+  local d="$1" o m
+  [ -L "$d" ] && { echo "Refusing to install: $d is a symlink."; return 1; }
+  [ -e "$d" ] || return 0
+  o=$(stat -f '%u' "$d"); m=$(stat -f '%Lp' "$d")
+  [ "$o" = 0 ] || { echo "Refusing to install: $d is not owned by root."; return 1; }
+  case "$m" in *[2367]?|*?[2367]) echo "Refusing to install: $d is writable by group or others (mode $m)."; return 1;; esac
+  return 0
+}
+for d in /usr /usr/local "$ROOT" "$ROOT/core" "$ROOT/modules" "$ROOT/bin" /Library/LaunchDaemons; do safe_dir "$d" || exit 1; done
+if [ -d /usr/local/bin ] && [ "$(stat -f '%u' /usr/local/bin)" != 0 ]; then
+  echo "    Note: /usr/local/bin is not owned by root, so the 'macscan' link there could be replaced"
+  echo "    by another program. You can always run $ROOT/macscan directly."
+fi
 echo "==> Installing mac-triage $MT_VERSION for $U into $ROOT"
 
 STAGE=$(mktemp -d /private/var/tmp/mactriage-install.XXXXXX) || exit 1
@@ -48,14 +69,17 @@ stage_payload
 launchctl bootout system/com.mactriage.auto 2>/dev/null
 launchctl bootout system/com.mactriage.runner 2>/dev/null
 
-if grep -q "# >>> mac-triage >>>" "$UH/.zshrc" 2>/dev/null; then
-  sed -i '' '/# >>> mac-triage >>>/,/# <<< mac-triage <<</d' "$UH/.zshrc"; chown "$U" "$UH/.zshrc"
+# Old 1.x versions added a shell function to .zshrc. Remove it as the user (not as root).
+if sudo -u "$U" grep -q "# >>> mac-triage >>>" "$UH/.zshrc" 2>/dev/null; then
+  sudo -u "$U" sed -i '' '/# >>> mac-triage >>>/,/# <<< mac-triage <<</d' "$UH/.zshrc"
   echo "==> Removed the old macscan function from .zshrc"
 fi
 
-mkdir -p "$ROOT/bin" "$ROOT/helper" "$ROOT/core" "$ROOT/modules" "$ROOT/rules" "$ROOT/state/inv"
-rm -f "$ROOT"/modules/*.sh
-rm -rf "$ROOT/src"
+umask 022
+mkdir -p "$ROOT/bin" "$ROOT/rules"
+mkdir -p -m 700 "$ROOT/state"; mkdir -p "$ROOT/state/inv"
+# Replace code folders completely so files removed in this version do not linger.
+rm -rf "$ROOT/core" "$ROOT/modules" "$ROOT/helper" "$ROOT/src"
 ( cd "$STAGE" && find . -type f ) | while IFS= read -r f; do
   f="${f#./}"; mkdir -p "$ROOT/$(dirname "$f")"; cp "$STAGE/$f" "$ROOT/$f"
 done
@@ -95,8 +119,8 @@ else
 fi
 
 chown -R root:wheel "$ROOT"
-find "$ROOT" -type d -exec chmod 755 {} +
-find "$ROOT" -type f -exec chmod 644 {} +
+find "$ROOT" -path "$ROOT/state" -prune -o -type d -exec chmod 755 {} +
+find "$ROOT" -path "$ROOT/state" -prune -o -type f -exec chmod 644 {} +
 chmod 755 "$ROOT/macscan" "$ROOT/core/run.sh" "$ROOT"/modules/*.sh
 [ -f "$ROOT/bin/macscan-helper" ] && chmod 755 "$ROOT/bin/macscan-helper"
 chmod -R go-rwx "$ROOT/state"

@@ -37,7 +37,8 @@ options_parse "$@" || exit 2
 export U="$TARGET_USER"
 UID_N="$(id -u "$U" 2>/dev/null)"; export UID_N
 [ -n "$UID_N" ] || { echo "User $U not found."; exit 1; }
-UH="$(dscl . -read "/Users/$U" NFSHomeDirectory | awk '{print $2}')"; export UH
+UH="$(dscl . -read "/Users/$U" NFSHomeDirectory 2>/dev/null | sed -n 's/^NFSHomeDirectory: //p' | head -1)"; export UH
+[ -d "$UH" ] || { echo "Home folder of $U not found."; exit 1; }
 export DAYS QUICK CLAM_SCOPE OUTBASE ROOT STATE
 export RUN="" INV=""
 # shellcheck source=common.sh

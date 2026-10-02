@@ -84,9 +84,10 @@ set_config(){
   set_config_raw "$k" "$v"; echo "$k = $v"
 }
 
+xml(){ printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
 helper_args(){
-  if [ -x "$ROOT/bin/macscan-helper" ]; then printf '<string>%s</string>' "$ROOT/bin/macscan-helper"
-  else printf '<string>/bin/bash</string><string>%s</string>' "$ROOT/core/run.sh"; fi
+  if [ -x "$ROOT/bin/macscan-helper" ]; then printf '<string>%s</string>' "$(xml "$ROOT/bin/macscan-helper")"
+  else printf '<string>/bin/bash</string><string>%s</string>' "$(xml "$ROOT/core/run.sh")"; fi
 }
 write_plist(){
   local label="$1" arg="$2" extra="$3" file="/Library/LaunchDaemons/$1.plist"
@@ -104,6 +105,7 @@ $extra
 </dict></plist>
 EOF
   chown root:wheel "$file"; chmod 644 "$file"
+  plutil -lint "$file" >/dev/null || echo "Warning: $file is not a valid property list."
 }
 install_services(){
   launchctl bootout "system/$RUN_LABEL" 2>/dev/null
@@ -113,10 +115,10 @@ install_services(){
   return 0
 }
 auto_on(){
-  local uh; uh=$(dscl . -read "/Users/$TARGET_USER" NFSHomeDirectory | awk '{print $2}')
+  local uh; uh=$(dscl . -read "/Users/$TARGET_USER" NFSHomeDirectory 2>/dev/null | sed -n 's/^NFSHomeDirectory: //p' | head -1)
   launchctl bootout "system/$AUTO_LABEL" 2>/dev/null
   write_plist "$AUTO_LABEL" "--scheduled" "  <key>StartInterval</key><integer>3600</integer>
-  <key>WatchPaths</key><array><string>/Applications</string><string>$uh/Applications</string></array>
+  <key>WatchPaths</key><array><string>/Applications</string><string>$(xml "$uh")/Applications</string></array>
   <key>RunAtLoad</key><false/>"
   if launchctl bootstrap system "$AUTO_PLIST"; then set_config_raw AUTO on; echo "Automatic scans: ON (every $AUTO_INTERVAL_DAYS days, plus new apps)"; fi
 }

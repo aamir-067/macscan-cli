@@ -44,3 +44,12 @@ setup_file(){
   "$REPO/scripts/build.sh" --out "$BATS_TEST_TMPDIR/again" >/dev/null
   cmp "$OUTDIR/install-mac-triage.sh" "$BATS_TEST_TMPDIR/again/install-mac-triage.sh"
 }
+
+@test "installer checks that the install path is root-owned and not writable by others" {
+  grep -q 'safe_dir "$d" || exit 1' "$OUTDIR/install-mac-triage.sh"
+  grep -q 'Refusing to install: $d is writable by group or others' "$OUTDIR/install-mac-triage.sh"
+}
+
+@test "installer edits the user's .zshrc as the user, never as root" {
+  not grep -nE '^[^#]*sed -i .*\.zshrc' <(grep -v 'sudo -u "\$U" sed -i' "$OUTDIR/install-mac-triage.sh")
+}

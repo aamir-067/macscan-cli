@@ -55,3 +55,7 @@ teardown(){ drop_env; }
   run validate --output rel; [ "$status" -eq 2 ]
   run validate --evil; [ "$status" -eq 2 ]
 }
+
+@test "xml escapes characters that would break a property list" {
+  [ "$(xml '/Users/a&b/<x>')" = '/Users/a&amp;b/&lt;x&gt;' ]
+}
