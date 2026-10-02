@@ -1,23 +1,27 @@
-# Development rules
+# Development
 
-## Non-negotiable
-- Bash 3.2: no associative arrays, `mapfile`, `${var,,}`, `|&`, or `declare -n`. Process substitution and `+=` on arrays are fine.
-- Modules are read-only. They may read anything, write only to `$RUN`, `$INV` and temp files they delete.
-- Root never executes user-writable code. Run Homebrew tools with `sudo -u "$U" -H`. Use absolute paths for anything not in `/usr/bin`, `/bin`, `/usr/sbin`, `/sbin`.
-- Never run git, npm, bun, node, or editors inside scanned repositories; read files directly (for example parse `.git/config` with awk).
-- Never walk `~/Library/CloudStorage` (it can trigger cloud downloads) or VM disk images; use the prune arrays in `common.sh`.
-- Discover things by structure, not by name, so new browsers, editors and AI tools are found automatically.
-- Inventory lines must be stable across scans (no versions, PIDs or timestamps).
-- Flag message prefixes are a public contract; changing one requires updating `known-flags.md` matching.
-- Every slow command gets a timeout via `tmo`.
-- All output passes through `redact`; never add code that prints secret values.
+## Rules
 
-## Workflow for any change
-1. Read `architecture.md` and the code you will touch.
-2. Make the change in the source (after P0-2, the `src/` tree; until then, `install-mac-triage.sh`).
-3. Run `/test`. Add or update tests for the change.
-4. Update `architecture.md`, `known-flags.md`, `roadmap.md` and CLAUDE.md "Current state" if affected.
-5. The user installs: `sudo bash install-mac-triage.sh`, then `macscan --check-fda` (re-grant FDA if the helper was rebuilt), then a targeted `macscan --only NN`.
+- **Bash 3.2.** No associative arrays, `mapfile`, `${var,,}`, `|&` or `declare -n`. Process substitution and `+=` on arrays are fine. Tests run under `/bin/bash`.
+- **Modules are read-only.** They read anything and write only to `$RUN`, `$INV` and files from `tmpf`.
+- **Root never runs user-writable code.** Homebrew tools run as `sudo -u "$U" -H`. Use absolute paths for anything outside `/usr/bin`, `/bin`, `/usr/sbin`, `/sbin`.
+- **Root never writes where the user can.** Use `tmpf` (never `/tmp`), `rd` for reading user-writable files, `sql` for SQLite, and `deliver.sh` for anything in the report folder.
+- **Never run code from scanned locations** (`git`, `npm`, `node`, editors). Parse files directly, for example `.git/config` with awk.
+- **Never walk `~/Library/CloudStorage`** or VM disk images; use the prune arrays in `common.sh`.
+- **Discover by structure, not by name,** so new browsers, editors and AI tools are found automatically.
+- **Stable inventory lines** (no versions, PIDs or timestamps).
+- **Flag prefixes are a public contract.**
+- **Every slow command gets a timeout** via `tmo`.
+- **All output passes through `redact`;** never print secret values.
 
-## Adding a tool
-Prefer tools that are open source, maintained, and can run as the user. Install with Homebrew (Tier 1). Wrap them in a module that skips cleanly when the tool is missing. Candidates are listed in `roadmap.md`.
+## Workflow for a change
+
+1. Read [architecture.md](architecture.md) and the code you will touch.
+2. Change `src/`. Add or update tests.
+3. `make test`.
+4. Update docs and the `Unreleased` section of `CHANGELOG.md`.
+5. Try it on your Mac: `make install`, then `macscan --check-fda` (re-grant Full Disk Access if the helper was rebuilt), then a targeted `macscan --only NN`.
+
+## Adding an external tool
+
+Prefer tools that are open source, maintained, and can run as the user. Wrap them in a module that skips cleanly when the tool is missing, and say in the module output how to install it.
