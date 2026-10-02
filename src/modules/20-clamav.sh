@@ -16,7 +16,7 @@ else
   EX+=(--exclude-dir='node_modules')
   TG=("$UH/Downloads" "$UH/Desktop" "$UH/Documents" "$UH/Library/LaunchAgents" "$AS" /Applications /Library/LaunchAgents /Library/LaunchDaemons "/Library/Application Support" /Library/PrivilegedHelperTools /Users/Shared /private/tmp /private/var/tmp)
 fi
-O=$(mktemp /tmp/mactriage.XXXXXX)
+O=$(tmpf)
 tmo 14400 sudo -u "$U" -H "$C" -r -i --max-filesize=100M --max-scansize=400M "${EX[@]}" "${TG[@]}" > "$O" 2>/dev/null
 cat "$O"
 grep " FOUND$" "$O" | while IFS= read -r l; do flag "ClamAV detection: $l"; done

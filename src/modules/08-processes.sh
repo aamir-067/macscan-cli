@@ -26,7 +26,7 @@ section "Processes using deleted files or executables"
 lsof +L1 2>/dev/null | grep -v "/private/var/db/diagnostics" | head -100
 
 section "Processes with password, cookie or keychain files open"
-T=$(mktemp /tmp/mactriage.XXXXXX)
+T=$(tmpf)
 lsof -n +c 0 2>/dev/null | grep -E "keychain-db|Login Data|Cookies|key4\.db|logins\.json|cookies\.sqlite|Web Data|Local State|wallet|Exodus|Electrum|com\.apple\.TCC" | awk '{n=$9; for(i=10;i<=NF;i++) n=n" "$i; print $1" | "$2" | "$3" | "n}' | sort -u > "$T"
 cat "$T"
 grep -vE "^(Google Chrome|Google Chrome Helper|firefox|Firefox|Brave Browser|Arc|Microsoft Edge|Safari|com\.apple|securityd|secd|trustd|tccd|Bitwarden|cfprefsd|mds|mds_stores|mdworker|mdworker_shared|loginwindow|accountsd|Electron|Code|Cursor|Slack|Discord|Spotify|Notion|Postman|Claude|Antigravity|Zed|WhatsApp|Telegram|Raycast|Blip|Google Drive|Google Docs|Google Sheets|Google Slides|OpenCode|Anki)" "$T" | while read -r l; do flag "Unexpected process has a sensitive file open: $l"; done

@@ -62,7 +62,7 @@ for pj in /Applications/*.app/Contents/Resources/distribution/policies.json; do 
 section "Saved passwords and cards per browser profile (counts only, no contents)"
 chromium_ext_dirs | while IFS= read -r ed; do
   pd=$(dirname "$ed"); ld="$pd/Login Data"; [ -f "$ld" ] || continue
-  T=$(mktemp /tmp/mactriage.XXXXXX)
+  T=$(tmpf)
   cp "$ld" "$T" 2>/dev/null; n=$(sqlite3 "$T" "select count(*) from logins" 2>/dev/null)
   c=""; [ -f "$pd/Web Data" ] && { cp "$pd/Web Data" "$T" 2>/dev/null; c=$(sqlite3 "$T" "select count(*) from credit_cards" 2>/dev/null); }
   rm -f "$T"

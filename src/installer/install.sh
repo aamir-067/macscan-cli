@@ -85,11 +85,11 @@ sed -i '' "s|^TARGET_USER=.*|TARGET_USER=\"$U\"|" "$ROOT/config"
 
 ############################################################ BUILD, PERMISSIONS, SERVICES
 echo "==> Compiling the Full Disk Access helper"
-if clang -O2 -Wall -o "$ROOT/bin/macscan-helper" "$ROOT/helper/macscan-helper.c" 2>/tmp/mactriage-clang.err; then
+if clang -O2 -Wall -o "$ROOT/bin/macscan-helper" "$ROOT/helper/macscan-helper.c" 2>"$STAGE/clang.err"; then
   codesign -f -s - -i com.mactriage.helper "$ROOT/bin/macscan-helper" >/dev/null 2>&1
   echo "    ok"
 else
-  echo "    WARNING: compile failed (details in /tmp/mactriage-clang.err)."
+  echo "    WARNING: compile failed:"; head -20 "$STAGE/clang.err" | sed 's/^/      /'
   echo "    If it mentions the Xcode license: sudo xcodebuild -license accept, then run this installer again."
   rm -f "$ROOT/bin/macscan-helper"
 fi

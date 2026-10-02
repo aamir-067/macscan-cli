@@ -17,12 +17,12 @@ done
 T+=("$UH/Library/LaunchAgents" "$AS" "$UH/Library/Scripts" /Library/LaunchAgents /Library/LaunchDaemons "/Library/Application Support" /Library/PrivilegedHelperTools /Library/Security/SecurityAgentPlugins /Users/Shared /private/tmp /private/var/tmp)
 for a in /Applications/* "$UH"/Applications/*; do case "$a" in */Xcode*.app|*/"Android Studio.app"|*Simulator*|*/Utilities|*/Safari.app) continue;; esac; T+=("$a"); done
 echo "Scanning ${#T[@]} locations (files over 50 MB skipped)..."
-O=$(mktemp /tmp/mactriage.XXXXXX)
+O=$(tmpf); M=$(tmpf)
 for t in "${T[@]}"; do
   [ -e "$t" ] || continue
   tmo 5400 sudo -u "$U" -H "$Y" -C -r -N -w -f -z 50000000 -p 4 "$R" "$t" 2>/dev/null >> "$O"
 done
-grep -vF "$OUTBASE/" "$O" | grep -vF "$ROOT/" | sort -u > "$O.m"
+grep -vF "$OUTBASE/" "$O" | grep -vF "$ROOT/" | sort -u > "$M"
 sub "Matches"
-if [ -s "$O.m" ]; then cat "$O.m"; while read -r rule path; do flag "YARA match: $rule -> $path"; done < "$O.m"; else echo "No YARA matches."; fi
-rm -f "$O" "$O.m"
+if [ -s "$M" ]; then cat "$M"; while read -r rule path; do flag "YARA match: $rule -> $path"; done < "$M"; else echo "No YARA matches."; fi
+rm -f "$O" "$M"

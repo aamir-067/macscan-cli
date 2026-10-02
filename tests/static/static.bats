@@ -41,3 +41,9 @@ scripts(){ echo "$SRC/macscan"; ls "$SRC"/core/*.sh "$SRC"/core/lib/*.sh "$SRC"/
   run grep -nE 'chown "\$U"|cp [^|;]* "\$(tmp|utmp)/|> *"\$(tmp|utmp)/' "$SRC/core/run.sh" "$SRC"/core/lib/*.sh "$SRC/core/common.sh"
   [ "$status" -eq 1 ] || { echo "$output"; return 1; }
 }
+
+@test "root code never creates files in the shared /tmp" {
+  # Allowed: `mktemp -d` (atomic, private) and the case check on its result.
+  run grep -nE '/tmp/mactriage|mktemp /tmp|> */tmp/|2> */tmp/' "$SRC/core/run.sh" "$SRC"/core/lib/*.sh "$SRC/core/common.sh" "$SRC"/modules/*.sh "$SRC/installer/install.sh"
+  [ "$(echo "$output" | grep -v 'mktemp -d ' | grep -v 'case "\$utmp"' | grep -c .)" = 0 ] || { echo "$output"; return 1; }
+}

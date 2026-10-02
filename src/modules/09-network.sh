@@ -8,7 +8,7 @@ lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR>1 && $9 !~ /^(127\.0\.0\.1|\[:
 sub "UDP sockets"; lsof -nP -iUDP | head -80
 
 section "Connection sampling (6 snapshots over 60 seconds)"
-T=$(mktemp /tmp/mactriage.XXXXXX)
+T=$(tmpf)
 for _ in 1 2 3 4 5 6; do lsof -nP -iTCP -sTCP:ESTABLISHED 2>/dev/null | awk 'NR>1 {print $1, $2, $3, $9}'; sleep 10; done | sort | uniq -c | sort -rn > "$T"
 cat "$T"
 section "Remote endpoints with reverse DNS"

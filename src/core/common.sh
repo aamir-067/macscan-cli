@@ -11,6 +11,9 @@ flag(){ echo "[!] $*"; echo "[$MODULE] $*" >> "$RUN/.flags.raw"; }
 inv(){ local c="$1"; shift; [ -n "$INV" ] || return 0; printf '%s\n' "$*" >> "$INV/$c.txt"; }
 asuser(){ launchctl asuser "$UID_N" sudo -H -u "$U" "$@"; }
 tmo(){ local t="$1"; shift; perl -e 'alarm shift; exec @ARGV' "$t" "$@"; }
+# Temp files go in the scan's private folder (MT_TMP, root-only, inside state/).
+# Never use the shared /tmp: another process can predict a name there and plant a symlink.
+tmpf(){ mktemp "${MT_TMP:?}/t.XXXXXX"; }
 sha(){ shasum -a 256 "$1" 2>/dev/null | awk '{print substr($1,1,16)}'; }
 is_self(){ case "$1" in "$ROOT"/*|*com.mactriage.*) return 0;; esac; return 1; }
 is_system_path(){ case "$1" in /System/*|/usr/libexec/*|/usr/sbin/*|/sbin/*|/bin/*|/usr/bin/*|/Library/Apple/*) return 0;; esac; return 1; }

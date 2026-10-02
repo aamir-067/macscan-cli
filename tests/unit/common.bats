@@ -65,3 +65,14 @@ teardown(){ drop_env; }
   run tmo 1 /bin/sleep 5
   [ "$status" -ne 0 ]
 }
+
+@test "tmpf creates private files inside MT_TMP" {
+  f=$(tmpf)
+  [[ "$f" == "$MT_TMP/"* ]] && [ -f "$f" ]
+  [ "$(stat -f %Lp "$f")" = 600 ]
+}
+
+@test "tmpf refuses to run without MT_TMP" {
+  run bash -c 'unset MT_TMP; source "$1/core/common.sh"; tmpf' _ "$SRC"
+  [ "$status" -ne 0 ]
+}

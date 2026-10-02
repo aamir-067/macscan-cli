@@ -41,7 +41,7 @@ if [ "$TASK" = clean ]; then cleanup_reports; echo "Report cleanup done."; exit 
 if [ "$MODE" = auto ]; then
   [ "$AUTO" = on ] || exit 0
   if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then exit 0; fi
-  APPS_NOW=$(mktemp /tmp/mactriage.XXXXXX); app_list > "$APPS_NOW"
+  APPS_NOW="$STATE/apps.now"; app_list > "$APPS_NOW"
   [ -f "$STATE/apps.list" ] || cp "$APPS_NOW" "$STATE/apps.list"
   SHOULD=0
   if [ "$AUTO_ON_NEW_APP" = yes ] && [ -n "$(comm -13 "$STATE/apps.list" "$APPS_NOW")" ]; then
@@ -59,8 +59,9 @@ fi
 
 if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then echo "A scan is already running."; exit 3; fi
 echo $$ > "$PIDF"
-trap 'rm -f "$PIDF"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
-rm -rf "$STATE/work"
+trap 'rm -f "$PIDF"; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
+rm -rf "$STATE/work" "$STATE/tmp"
+MT_TMP="$STATE/tmp"; mkdir -m 700 "$MT_TMP"; export MT_TMP
 trap 'echo; echo "Scan stopped by request."; echo "$(date "+%F %T") | $MODE | stopped | $REASON" >> "$HIST"; exit 130' TERM INT
 exec > >(tee "$LOG") 2>&1
 echo "@@START@@ $(date)"
