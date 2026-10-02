@@ -34,3 +34,4 @@ smoke(){
 }
 @test "21 plaintext secrets runs cleanly" { smoke 21 120; }
 @test "22 supply chain runs cleanly (tools present or not)" { SUPPLY_CHAIN=yes smoke 22 600; }
+@test "23 osquery runs cleanly (installed or not)" { smoke 23 600; }

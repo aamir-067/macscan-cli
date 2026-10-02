@@ -122,6 +122,20 @@ gitleaks_findings(){
     for (@$j) { next unless ref $_ eq "HASH"; printf "%s:%s (%s)\n", $_->{File} // "?", $_->{StartLine} // "?", $_->{RuleID} // "?" }'
 }
 
+# root_safe_bin <path>: true if root may execute this program: the resolved file and
+# every folder above it are owned by root and not writable by group or others.
+root_safe_bin(){
+  local p d
+  p=$(/usr/bin/readlink -f "$1" 2>/dev/null) || return 1
+  [ -f "$p" ] && [ -x "$p" ] || return 1
+  d="$p"
+  while :; do
+    [ -n "$(find "$d" -maxdepth 0 -user root ! -perm -g+w ! -perm -o+w 2>/dev/null)" ] || return 1
+    [ "$d" = / ] && return 0
+    d=$(dirname "$d")
+  done
+}
+
 # Folders never walked: cloud drives, VM disks, caches, dependency trees, our own reports
 PB=( -path "$UH/Library" -o -path "$UH/.Trash" -o -path "$UH/.orbstack" -o -path "$OUTBASE" -o -name node_modules -o -path "$UH/.npm" -o -path "$UH/.cache" -o -path "$UH/.gradle" -o -path "$UH/.rustup" -o -path "$UH/.cargo/registry" -o -path "$UH/go/pkg" -o -path "$UH/.bun/install" )
 PRUNE=( \( "${PB[@]}" -o -name .git \) -prune -o )

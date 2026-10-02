@@ -48,6 +48,7 @@
 | 20 | ClamAV | Antivirus scan of your user folders and system launch locations, run as you |
 | 21 | Plaintext secrets | Password-manager exports, private keys and stray `.env` files in Downloads, Desktop and Documents (paths only, never contents) |
 | 22 | Supply chain (opt-in) | Known-vulnerable dependencies with `osv-scanner` (offline database) and committed secrets with `gitleaks` (redacted), across your repositories, run as you |
+| 23 | osquery cross-check | When [osquery](https://osquery.io) is installed (root-owned), repeats launchd, startup items, listeners, system extensions and browser extensions from an independent source |
 
 New browsers, editors and AI tools are discovered by their folder structure, so they are covered without a code change. Every scan keeps a stable inventory (apps, launch items, extensions, MCP servers, hooks, permissions, and more) and reports anything **new since the last scan**, which is the most useful early-warning signal.
 

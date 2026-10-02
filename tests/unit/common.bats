@@ -131,3 +131,10 @@ teardown(){ drop_env; }
   [ "$out" = "/r/config.js:12 (aws-access-token)" ]
   [ -z "$(printf 'not json' | gitleaks_findings)" ]
 }
+
+@test "root_safe_bin accepts system binaries and refuses user-owned ones" {
+  root_safe_bin /bin/ls
+  cp /bin/ls "$TEST_TMP/ls"
+  not root_safe_bin "$TEST_TMP/ls"
+  not root_safe_bin /nonexistent/thing
+}

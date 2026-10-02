@@ -8,6 +8,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - `macscan --set` now adds a setting that is missing from an older config file (it used to do nothing), and checks yes/no and enumerated values.
 
 ### Added
+- Module 23: when osquery is installed and its whole path is root-owned, cross-checks launchd, startup items, network listeners, system extensions and Chromium extensions from an independent source (P2-2).
 - Module 22 (opt-in, `SUPPLY_CHAIN=yes`): `osv-scanner` with its offline database for known-vulnerable dependencies, and `gitleaks` for secrets committed to repositories (file, line and rule only). Both run as the user and are skipped with an install hint when missing (P2-1).
 - `NOTIFY=dialog`: at the end of a scan, a dialog with an **Open report** button that opens the summary (P3-2).
 - `--include-trash` and `INCLUDE_TRASH=yes`: the file-system sweep, YARA and ClamAV also cover the Trash (P2-4).
