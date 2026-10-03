@@ -93,3 +93,16 @@ teardown(){ drop_env; }
   run set_config NOTIFY=dialog; [ "$status" -eq 0 ]
   run set_config CLAMAV_SCOPE=everything; [ "$status" -eq 1 ]
 }
+
+@test "status shows module progress from the engine's progress file" {
+  now=$(date +%s); echo "12 24 12-applications $((now-180)) $((now-1260))" > "$STATE/progress"
+  run progress_line
+  [[ "$output" == *"module 12/24 (12-applications) for 3 min"* ]] || return 1
+  [[ "$output" == *"(21 min ago)"* ]] || return 1
+}
+
+@test "status ignores a malformed progress file" {
+  echo "x y z" > "$STATE/progress"
+  run progress_line
+  [ -z "$output" ]
+}

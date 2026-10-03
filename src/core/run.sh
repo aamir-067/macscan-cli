@@ -15,7 +15,7 @@ YARAC=/opt/homebrew/bin/yarac
 # shellcheck disable=SC2034
 FRESHCLAM=/opt/homebrew/bin/freshclam
 LOG="$STATE/current.log"; PIDF="$STATE/running.pid"; HIST="$STATE/history.log"
-for lib in text options modules auto notify rules report lock severity integrity execmon; do
+for lib in text options modules auto notify rules report lock severity integrity execmon power; do
   # shellcheck source=/dev/null
   source "$ROOT/core/lib/$lib.sh"
 done
@@ -74,10 +74,11 @@ if [ "$MODE" = auto ]; then
 fi
 
 lock_acquire || { echo "A scan is already running."; exit 3; }
-trap 'execmon_stop; lock_release; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
+trap 'execmon_stop; lock_release; rm -f "$STATE/progress"; rm -rf "$STATE/tmp"; [ -n "${NAME:-}" ] && rm -rf "${WORK:?}/$NAME"' EXIT
 # Leftovers from a run that was killed before it could clean up.
 rm -rf "$STATE/work" "$STATE/tmp" "$STATE"/inv/new_*
 MT_TMP="$STATE/tmp"; mkdir -m 700 "$MT_TMP"; export MT_TMP
+power_keep_awake
 trap 'echo; echo "Scan stopped by request."; echo "$(date "+%F %T") | $MODE | stopped | $REASON" >> "$HIST"; exit 130' TERM INT
 exec > >(tee "$LOG") 2>&1
 echo "@@START@@ $(date)"
@@ -115,12 +116,17 @@ for m in "${MODS[@]}"; do
   i=$((i+1)); name=$(basename "$m" .sh)
   module_selected "$m" || continue
   t=$(date +%s); printf "[%2d/%d] %-28s " "$i" "$TOTAL" "$name"
+  echo "$i $TOTAL $name $t $T0" > "$STATE/progress"
   export MODULE="$name"
   { echo "#### $name | $(date)"; tmo 14400 /bin/bash "$m"; } 2>&1 | redact > "$RUN/modules/$name.txt"
+  echo "$name $t $(date +%s)" >> "$MT_TMP/timing"
   echo "done in $(( $(date +%s) - t ))s"
 done
 
 execmon_stop
+rm -f "$STATE/progress"
+sleep_report "$T0" "$(date +%s)" "$MT_TMP/timing"
+[ "$SLEEP_COUNT" -gt 0 ] && echo "The Mac slept $SLEEP_COUNT time(s) during this scan ($(( SLEEP_SECONDS / 60 )) min). Modules that ran across a sleep: ${SLEEP_MODULES:-none}"
 NEWS="$RUN/.news"
 diff_inventories
 
@@ -142,7 +148,7 @@ rm -rf "$RUN"
 cleanup_reports
 [ "$QUICK" = 0 ] && [ -z "$ONLY$SKIP" ] && date +%s > "$STATE/last-full-scan"
 [ "$MODE" = auto ] && [ -n "$APPS_NOW" ] && { cp "$APPS_NOW" "$STATE/apps.list"; rm -f "$APPS_NOW"; }
-MINS=$(( ($(date +%s)-T0)/60 ))
+MINS=$(( ($(date +%s) - T0 - ${SLEEP_SECONDS:-0}) / 60 ))
 echo "$(date '+%F %T') | $MODE | $REASON | flags: $NFLAGS | $MINS min | $RESULT" | one_line >> "$HIST"; echo >> "$HIST"
 echo; echo "Finished in $MINS minutes. Red flags: $NFLAGS"; echo "$RESULT"
 if [ "$NFLAGS" -gt 0 ]; then notify "Mac scan: $NFLAGS red flags" "Critical $N_CRIT, high $N_HIGH. Report saved in $(basename "$OUTBASE")" "${SUMMARY:-}"

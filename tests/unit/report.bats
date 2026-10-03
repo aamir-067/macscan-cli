@@ -74,3 +74,16 @@ print(f["Injected malware marker found: /p.js"]["fingerprint"])
   [ "$status" -eq 0 ] || { echo "$output"; return 1; }
   [ "$output" = "$(printf '%s' '17-code-repos|Injected malware marker found: /p.js' | shasum -a 256 | cut -c1-16)" ]
 }
+
+@test "the summary and report.json state the sleep and exclude it from the duration" {
+  source "$SRC/core/lib/severity.sh"; source "$SRC/core/common.sh"
+  : > "$RUN/.flags.raw"; : > "$NEWS"
+  VERSION=t MODE=manual REASON=test FDA=yes T0=$(( $(date +%s) - 3600 )) ROOT="$SRC"
+  SLEEP_COUNT=1 SLEEP_SECONDS=1800 SLEEP_MODULES="09-network 19-yara"
+  prepare_flags
+  run write_summary
+  [[ "$output" == *"Duration: 30 min"* ]] || return 1
+  [[ "$output" == *"slept 1 time(s) during this scan for 30 min"* ]] || return 1
+  [[ "$output" == *"09-network 19-yara"* ]] || return 1
+  write_json | /usr/bin/python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["sleep"]=={"count":1,"seconds":1800,"modules":["09-network","19-yara"]}, d["sleep"]; assert 1790 < d["duration_seconds"] < 1810'
+}

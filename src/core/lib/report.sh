@@ -52,7 +52,11 @@ prepare_flags(){
 write_summary(){
   echo "mac-triage $VERSION scan summary"
   echo "Date: $(date) | Mode: $MODE | Reason: $REASON"
-  echo "User: $U | Look-back: $DAYS days | Full Disk Access: $FDA | Duration: $(( ($(date +%s)-T0)/60 )) min"
+  echo "User: $U | Look-back: $DAYS days | Full Disk Access: $FDA | Duration: $(( ($(date +%s) - T0 - ${SLEEP_SECONDS:-0}) / 60 )) min"
+  if [ "${SLEEP_COUNT:-0}" -gt 0 ]; then
+    echo "Sleep: the Mac slept ${SLEEP_COUNT} time(s) during this scan for $(( SLEEP_SECONDS / 60 )) min (not counted in the duration)."
+    echo "       Modules that ran across a sleep may mix before and after data: ${SLEEP_MODULES:-none}"
+  fi
   echo "YARA rules: $(cat "$ROOT/rules/sets.txt" 2>/dev/null || echo none) | ClamAV: $( [ -x /opt/homebrew/bin/clamscan ] && echo installed || echo not installed)"
   echo
   echo "RED FLAGS: $NFLAGS (critical $N_CRIT, high $N_HIGH, medium $N_MED, low $N_LOW)"
@@ -74,7 +78,7 @@ write_summary(){
 # which stays the same across scans as long as the flag text does.
 write_json(){
   MT_VERSION="$VERSION" MT_MODE="$MODE" MT_REASON="$REASON" MT_USER="$U" MT_DAYS="$DAYS" MT_FDA="$FDA" \
-  MT_DURATION=$(( $(date +%s) - T0 )) MT_SETS="$(cat "$ROOT/rules/sets.txt" 2>/dev/null)" \
+  MT_DURATION=$(( $(date +%s) - T0 - ${SLEEP_SECONDS:-0} )) MT_SLEEP_COUNT="${SLEEP_COUNT:-0}" MT_SLEEP_SECONDS="${SLEEP_SECONDS:-0}" MT_SLEEP_MODULES="${SLEEP_MODULES:-}" MT_SETS="$(cat "$ROOT/rules/sets.txt" 2>/dev/null)" \
   MT_MODULES="$(ls "$RUN/modules" 2>/dev/null | sed 's/\.txt$//' | tr '\n' ' ')" \
   perl -MJSON::PP -MDigest::SHA=sha256_hex -MPOSIX=strftime -e '
     my (@f, %c);
@@ -102,6 +106,8 @@ write_json(){
       mode => $ENV{MT_MODE}, reason => $ENV{MT_REASON}, user => $ENV{MT_USER},
       lookback_days => 0 + $ENV{MT_DAYS}, full_disk_access => $ENV{MT_FDA},
       duration_seconds => 0 + $ENV{MT_DURATION}, rule_sets => $ENV{MT_SETS},
+      sleep => { count => 0 + $ENV{MT_SLEEP_COUNT}, seconds => 0 + $ENV{MT_SLEEP_SECONDS},
+                 modules => [ grep { length } split / /, $ENV{MT_SLEEP_MODULES} ] },
       modules => [ grep { length } split / /, $ENV{MT_MODULES} ],
       counts => { total => $total, %c }, findings => \@f,
     };

@@ -28,7 +28,7 @@ SCANNING
 
 AUTOMATIC SCANS
   macscan --auto on|off        Weekly scans plus a scan when a new app is installed
-  macscan --status             Schedule, running scan, last result, tool versions
+  macscan --status             Schedule, running scan and its progress, last result, tool versions
   macscan --stop               Stop a running scan (manual or automatic)
   macscan --log                Watch a running scan
 
@@ -58,6 +58,16 @@ USAGE
 
 # Log and history text can contain names chosen by an attacker; never print it raw.
 show(){ /bin/bash -c 'source "$1/core/lib/text.sh"; sanitize' _ "$ROOT"; }
+
+# progress_line: "Progress: module 12/24 (12-applications) for 3 min, scan started 14:02 (21 min ago)".
+progress_line(){
+  local i n name t t0 now
+  read -r i n name t t0 < "$STATE/progress" 2>/dev/null || return 0
+  case "$i$n$t$t0" in *[!0-9]*|"") return 0;; esac
+  now=$(date +%s)
+  echo "Progress:         module $i/$n ($name) for $(( (now - t) / 60 )) min, scan started $(date -r "$t0" '+%H:%M') ($(( (now - t0) / 60 )) min ago)"
+  echo "                  If the Mac sleeps, the scan pauses and continues on wake; the report notes it."
+}
 
 running_pid(){ local p; p=$(cat "$STATE/running.pid" 2>/dev/null); [ -n "$p" ] && kill -0 "$p" 2>/dev/null && echo "$p"; }
 fmt_ts(){ if [ "${1:-0}" -gt 0 ] 2>/dev/null; then date -r "$1" '+%F %H:%M'; else echo "never"; fi; }
@@ -176,7 +186,10 @@ status(){
     echo "Automatic scans:  ON (every $AUTO_INTERVAL_DAYS days, new apps: $AUTO_ON_NEW_APP, skips below $AUTO_MIN_BATTERY% battery)"
   else echo "Automatic scans:  OFF"; fi
   p=$(running_pid)
-  if [ -n "$p" ]; then echo "Running now:      yes (pid $p). Use macscan --log or macscan --stop"; else echo "Running now:      no"; fi
+  if [ -n "$p" ]; then
+    echo "Running now:      yes (pid $p). Use macscan --log or macscan --stop"
+    progress_line
+  else echo "Running now:      no"; fi
   echo "Last scan:        $(tail -1 "$STATE/history.log" 2>/dev/null | show || echo never)"
   echo "Last full scan:   $(fmt_ts "$(cat "$STATE/last-full-scan" 2>/dev/null)")"
   echo "Reports:          $REPORT_DIR ($(find "$REPORT_DIR" -maxdepth 1 -type d -name 'scan_*' 2>/dev/null | wc -l | tr -d ' ') kept, max $KEEP_REPORTS, max age $MAX_AGE_DAYS days)"
