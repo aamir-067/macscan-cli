@@ -4,6 +4,14 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- `macscan --update` downloads the newest release installer and its checksums from GitHub as root into a root-only folder, verifies the SHA-256 and the version, then upgrades. `macscan --update --check` only reports whether an update exists; `--yes` skips the confirmation.
+- Upgrade-aware installer: it reports whether it installs, upgrades, repairs or downgrades; refuses to downgrade without `--allow-downgrade`; refuses to run during a scan; adds new settings to an existing config without changing existing values; and prints what was kept. New `--help` and `--uninstall` options.
+
+### Changed
+- Upgrades no longer recompile the Full Disk Access helper unless its source changed. A rebuilt binary has a new code signature, which silently cancels its Full Disk Access permission; keeping it keeps the permission. The installer now says when re-granting is needed and only then opens System Settings.
+- Upgrades skip the Homebrew install of YARA and ClamAV and the rule download when they are already present.
+
 ## [2.3.0] - 2026-10-03
 
 ### Added

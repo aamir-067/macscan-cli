@@ -95,6 +95,21 @@ make test        # optional: needs shellcheck and bats-core (brew install shellc
 make install     # builds dist/install-mac-triage.sh and runs it with sudo
 ```
 
+### Upgrading
+
+```bash
+macscan --update --check     # is there a newer version?
+macscan --update             # download, verify and install it
+```
+
+`macscan --update` downloads the release installer and its checksum file directly from GitHub as root, into a folder only root can write, checks the SHA-256 and the version, and only then installs. You can also run a newer `install-mac-triage.sh` (or `make install` from a newer checkout) over an existing install. Either way the installer:
+
+- detects the installed version and says what it does ("Upgrading 2.3.0 -> 2.4.0", or "Reinstalling" to repair the same version),
+- replaces all program files, so nothing from the old version lingers,
+- **keeps** your settings, scan history, acknowledged flags, YARA rules and reports, and adds any new settings with their default values,
+- keeps the Full Disk Access helper untouched unless its code changed, so the permission stays valid; if it did change, the installer tells you to re-grant it,
+- refuses to run while a scan is in progress, and refuses to install an older version over a newer one unless you pass `--allow-downgrade`.
+
 ### Last step: Full Disk Access
 
 macOS protects many of the places malware hides. The installer opens System Settings and a Finder window at the end:
@@ -221,7 +236,7 @@ Be clear about what a scan can and cannot tell you:
 macscan --uninstall
 ```
 
-This removes the tool and its services and keeps your reports. Also remove `macscan-helper` from Full Disk Access in System Settings. Optionally `brew uninstall yara clamav`.
+This removes the tool and its services and keeps your reports. `sudo bash install-mac-triage.sh --uninstall` does the same. Also remove `macscan-helper` from Full Disk Access in System Settings. Optionally `brew uninstall yara clamav`.
 
 ## Development
 
