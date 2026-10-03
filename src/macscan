@@ -2,6 +2,9 @@
 # macscan: command-line front end for mac-triage.
 ROOT="/usr/local/mac-triage"; STATE="$ROOT/state"; VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo unknown)"
 RUN_LABEL="com.mactriage.runner"; AUTO_LABEL="com.mactriage.auto"
+MT_REPO="aamir-067/macscan-cli"
+MT_API="https://api.github.com/repos/$MT_REPO/releases/latest"
+MT_DL="https://github.com/$MT_REPO/releases/download"
 RUN_PLIST="/Library/LaunchDaemons/$RUN_LABEL.plist"; AUTO_PLIST="/Library/LaunchDaemons/$AUTO_LABEL.plist"
 
 usage(){ echo "macscan $VERSION: deep, read-only security scanner for macOS"; cat <<'USAGE'
@@ -43,6 +46,11 @@ REPORTS
   macscan --history            Results of past scans
   macscan --clean              Apply report cleanup now
 
+UPDATING
+  macscan --update --check     See if a newer version of macscan is available
+  macscan --update             Download, verify and install the newest version (settings,
+                               history and reports are kept); --yes skips the question
+
 MAINTENANCE
   macscan --update-rules       Update YARA rules and ClamAV signatures now
   macscan --check-fda          Check the scanner has Full Disk Access
@@ -58,6 +66,66 @@ USAGE
 
 # Log and history text can contain names chosen by an attacker; never print it raw.
 show(){ /bin/bash -c 'source "$1/core/lib/text.sh"; sanitize' _ "$ROOT"; }
+
+# version_cmp A B: prints -1, 0 or 1 (semantic versions).
+version_cmp(){
+  local a="$1" b="$2" x y i
+  for i in 1 2 3; do
+    x=$(printf '%s' "$a" | cut -d. -f"$i"); y=$(printf '%s' "$b" | cut -d. -f"$i")
+    x=${x%%[!0-9]*}; y=${y%%[!0-9]*}; x=${x:-0}; y=${y:-0}
+    [ "$x" -lt "$y" ] && { echo -1; return; }
+    [ "$x" -gt "$y" ] && { echo 1; return; }
+  done
+  echo 0
+}
+
+# latest_version: the newest published release, from GitHub (empty when unreachable).
+latest_version(){
+  curl -fsSL --max-time 20 -H 'Accept: application/vnd.github+json' "$MT_API" 2>/dev/null \
+    | perl -MJSON::PP -e 'local $/; my $j = eval { decode_json(<STDIN>) } || {}; my $t = $j->{tag_name} // ""; $t =~ s/^v//; print $t if $t =~ /^\d+\.\d+\.\d+$/'
+}
+
+# download_release <version> <root-only dir>: fetches the release installer and its
+# checksums as root (so nothing running as the user can swap them), then verifies.
+download_release(){
+  local v="$1" d="$2"
+  if ! curl -fsSL --max-time 300 -o "$d/install-mac-triage.sh" "$MT_DL/v$v/install-mac-triage.sh" \
+     || ! curl -fsSL --max-time 60 -o "$d/SHA256SUMS" "$MT_DL/v$v/SHA256SUMS"; then
+    echo "Download failed. Nothing was installed."; return 1
+  fi
+  if ! (cd "$d" && grep -E '  install-mac-triage\.sh$' SHA256SUMS | shasum -a 256 -c - >/dev/null 2>&1); then
+    echo "Checksum verification FAILED. Nothing was installed."; return 1
+  fi
+  if [ "$(/bin/bash "$d/install-mac-triage.sh" --version 2>/dev/null)" != "mac-triage installer $v" ]; then
+    echo "The downloaded installer is not version $v. Nothing was installed."; return 1
+  fi
+  echo "Downloaded install-mac-triage.sh $v; SHA-256 matches the release checksums."
+}
+
+# update [--check] [--yes]: upgrade to the newest release.
+update(){
+  local check=no yes=no a v tmp rc
+  for a in "$@"; do
+    case "$a" in --check) check=yes;; --yes|-y) yes=yes;; *) echo "Usage: macscan --update [--check] [--yes]"; return 2;; esac
+  done
+  v=$(latest_version)
+  if [ -z "$v" ]; then
+    echo "Could not reach GitHub to check for updates. Try again later, or see https://github.com/$MT_REPO/releases"
+    return 1
+  fi
+  if [ "$(version_cmp "$v" "$VERSION")" != 1 ]; then echo "macscan $VERSION is up to date (latest release: $v)."; return 0; fi
+  echo "Update available: $VERSION -> $v"
+  echo "What's new: https://github.com/$MT_REPO/releases/tag/v$v"
+  [ "$check" = yes ] && { echo "Install it with: macscan --update"; return 0; }
+  if [ "$yes" != yes ]; then
+    read -r -p "Download, verify and install $v now? [y/N] " a
+    case "$a" in y|Y|yes|YES) ;; *) echo "Cancelled. Nothing was changed."; return 1;; esac
+  fi
+  tmp=$(mktemp -d /private/var/tmp/macscan-update.XXXXXX) || return 1
+  if download_release "$v" "$tmp"; then /bin/bash "$tmp/install-mac-triage.sh"; rc=$?; else rc=1; fi
+  rm -rf "$tmp"
+  return "$rc"
+}
 
 # progress_line: "Progress: module 12/24 (12-applications) for 3 min, scan started 14:02 (21 min ago)".
 progress_line(){
@@ -278,6 +346,7 @@ case "${1:-}" in
   --update-rules) /bin/bash "$ROOT/core/run.sh" --task update-rules;;
   --check-fda) start_job --task check-fda;;
   --verify) /bin/bash "$ROOT/core/run.sh" --task verify;;
+  --update) shift; update "$@";;
   --modules) list_modules;;
   --config) grep -v '^#' "$ROOT/config";;
   --set) set_config "${2:-}";;
