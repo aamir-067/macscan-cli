@@ -113,12 +113,14 @@ yara_rules(){
   printf 'TOKEN=x\n' > "$UH/Desktop/.env"
   printf 'TOKEN=x\n' > "$UH/Documents/app/.env"; echo '{}' > "$UH/Documents/app/package.json"
   printf 'x\n' > "$UH/Documents/notes/bank passwords.txt"
+  printf 'x\n' > "$UH/Documents/Apple Recovery Key.pdf"
   printf 'a,b\n1,2\n' > "$UH/Downloads/data.csv"
   mod 21
   grep -qxF "[21] Plaintext password export on disk: $UH/Downloads/export.csv" "$RUN/.flags.raw"
   grep -qxF "[21] Private key file outside ~/.ssh: $UH/Desktop/server.pem" "$RUN/.flags.raw"
   grep -qxF "[21] .env file outside a project: $UH/Desktop/.env" "$RUN/.flags.raw"
   grep -qxF "[21] Possible password file (by name): $UH/Documents/notes/bank passwords.txt" "$RUN/.flags.raw"
+  grep -qxF "[21] Possible password file (by name): $UH/Documents/Apple Recovery Key.pdf" "$RUN/.flags.raw"
   not grep -q "app/.env\|data.csv" "$RUN/.flags.raw"
   not grep -q "pw-not-real\|abc" <<<"$output"
 }

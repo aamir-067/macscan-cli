@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- Every GitHub link (README install commands, issue templates, SECURITY.md, CHANGELOG, the version bump script) pointed at `aamir-067/mac-triage` instead of the published repository `aamir-067/macscan-cli`, so the documented install commands failed. A test now checks the links.
+- Module 21 also flags files named like a recovery key (for example an exported FileVault or Apple Account recovery key), which infostealers collect.
+
 ## [2.2.0] - 2026-10-03
 
 ### Fixed
@@ -53,7 +57,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/mac-triage/compare/v2.2.0...HEAD
-[2.2.0]: https://github.com/aamir-067/mac-triage/compare/v2.1.0...v2.2.0
-[2.1.0]: https://github.com/aamir-067/mac-triage/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/aamir-067/mac-triage/releases/tag/v2.0.0
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/aamir-067/macscan-cli/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/aamir-067/macscan-cli/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/aamir-067/macscan-cli/releases/tag/v2.0.0

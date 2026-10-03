@@ -50,7 +50,7 @@ while IFS= read -r f; do
       in_project "$f" || hit env ".env file outside a project" "$f"; continue;;
   esac
   case "$b" in
-    *password*|*passwd*|*credentials*|*recovery*code*|*backup*code*|*seed*phrase*|*mnemonic*)
+    *password*|*passwd*|*credentials*|*recovery*code*|*recovery*key*|*backup*code*|*seed*phrase*|*mnemonic*)
       hit name "Possible password file (by name)" "$f";;
   esac
 done < "$L"
