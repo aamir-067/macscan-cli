@@ -16,7 +16,7 @@ esac
 grep -q "^## \[$new\]" "$REPO/CHANGELOG.md" && { echo "CHANGELOG already has $new" >&2; exit 1; }
 
 today="$(date +%Y-%m-%d)"
-repo_url="https://github.com/aamir-067/mac-triage"
+repo_url="https://github.com/aamir-067/macscan-cli"
 perl -0pi -e "
   s/^## \[Unreleased\]\n/## [Unreleased]\n\n## [$new] - $today\n/m;
   s{^\[Unreleased\]: .*\$}{[Unreleased]: $repo_url/compare/v$new...HEAD\n[$new]: $repo_url/compare/v$cur...v$new}m;

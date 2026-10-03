@@ -69,3 +69,8 @@ setup_file(){
   [ "$(grep -A3 '^## \[1.3.0\]' "$BATS_TEST_TMPDIR/r/CHANGELOG.md" | grep -c 'thing')" = 1 ]
   grep -q '^\[Unreleased\]: .*compare/v1.3.0...HEAD$' "$BATS_TEST_TMPDIR/r/CHANGELOG.md"
 }
+
+@test "links point at the published repository (aamir-067/macscan-cli)" {
+  run bash -c 'cd "$1" && git ls-files ":!tests/build/build.bats" | xargs grep -nE "github\.com/aamir-067/|--repo aamir-067/" | grep -vE "aamir-067/(macscan-cli|homebrew-tap)"' _ "$REPO"
+  [ -z "$output" ] || { echo "$output"; return 1; }
+}

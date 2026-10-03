@@ -2,7 +2,7 @@
 
 **A deep, read-only security scanner for macOS.** One command (`macscan`) checks the places Mac malware, infostealers and supply-chain attacks hide: persistence, privacy permissions, browser extensions, shell configs, developer tools, AI tool hooks and MCP servers, code repositories, network state, logs, and files (with YARA and ClamAV). It writes a plain-text report and tells you what changed since the last scan.
 
-[![CI](https://github.com/aamir-067/mac-triage/actions/workflows/ci.yml/badge.svg)](https://github.com/aamir-067/mac-triage/actions/workflows/ci.yml)
+[![CI](https://github.com/aamir-067/macscan-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/aamir-067/macscan-cli/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > mac-triage observes and reports. It never deletes, quarantines or changes anything on your Mac. Every flag is something to verify, not proof of malware.
@@ -67,8 +67,8 @@ Everything else is built into macOS. The tool is plain Bash 3.2 (the `/bin/bash`
 ### From a release (recommended)
 
 ```bash
-curl -fLO https://github.com/aamir-067/mac-triage/releases/latest/download/install-mac-triage.sh
-curl -fLO https://github.com/aamir-067/mac-triage/releases/latest/download/SHA256SUMS
+curl -fLO https://github.com/aamir-067/macscan-cli/releases/latest/download/install-mac-triage.sh
+curl -fLO https://github.com/aamir-067/macscan-cli/releases/latest/download/SHA256SUMS
 shasum -a 256 -c SHA256SUMS --ignore-missing     # must print: install-mac-triage.sh: OK
 less install-mac-triage.sh                        # it is readable; nothing is encoded
 sudo bash install-mac-triage.sh
@@ -77,7 +77,7 @@ sudo bash install-mac-triage.sh
 Releases are built by GitHub Actions from a tagged commit. With the GitHub CLI you can also verify that provenance:
 
 ```bash
-gh attestation verify install-mac-triage.sh --repo aamir-067/mac-triage
+gh attestation verify install-mac-triage.sh --repo aamir-067/macscan-cli
 ```
 
 To see exactly which files would be installed without running anything as root:
@@ -89,8 +89,8 @@ bash install-mac-triage.sh --extract-only ./preview
 ### From source
 
 ```bash
-git clone https://github.com/aamir-067/mac-triage.git
-cd mac-triage
+git clone https://github.com/aamir-067/macscan-cli.git
+cd macscan-cli
 make test        # optional: needs shellcheck and bats-core (brew install shellcheck bats-core)
 make install     # builds dist/install-mac-triage.sh and runs it with sudo
 ```

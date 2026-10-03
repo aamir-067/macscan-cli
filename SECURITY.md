@@ -4,7 +4,7 @@ mac-triage runs as root on a schedule, so a bug in it can matter more than a bug
 
 ## Supported versions
 
-Only the latest release receives fixes. Upgrade with the newest installer from the [releases page](https://github.com/aamir-067/mac-triage/releases).
+Only the latest release receives fixes. Upgrade with the newest installer from the [releases page](https://github.com/aamir-067/macscan-cli/releases).
 
 ## Reporting a vulnerability
 
