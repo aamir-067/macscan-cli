@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.2.2] - 2026-10-03
+
 ### Fixed
 - Module 08 trusted processes holding browser, keychain or wallet files by name. Names with spaces never matched (lsof writes them as `\x20`), Apple daemons were missing, and malware could simply copy a trusted name. Trust now requires an Apple program in a sealed system folder or a validly signed app with a Developer ID team; one real scan went from 19 false critical flags to none.
 
@@ -66,7 +68,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/aamir-067/macscan-cli/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/aamir-067/macscan-cli/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/aamir-067/macscan-cli/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/aamir-067/macscan-cli/compare/v2.0.0...v2.1.0
