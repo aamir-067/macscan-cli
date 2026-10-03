@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- Sleep-aware scans. While a scan runs, the Mac is kept from idle sleep (`caffeinate -i`, released when the scan ends). If the Mac still sleeps (for example the lid is closed), the scan pauses and continues on wake as before, and now the summary and `report.json` (`sleep` field) report how many times and how long it slept, exclude that time from the duration, and name the modules that ran across a sleep.
+- `macscan --status` shows the running module, its position and how long the scan has been running.
+
 ## [2.2.2] - 2026-10-03
 
 ### Fixed

@@ -115,7 +115,17 @@ macscan --last          # open the latest full report
 macscan --help          # everything else
 ```
 
-Ctrl+C stops *watching*; the scan keeps running. `macscan --log` resumes watching and `macscan --stop` cancels.
+Ctrl+C stops *watching*; the scan keeps running. `macscan --log` resumes watching, `macscan --status` shows which module is running and for how long, and `macscan --stop` cancels.
+
+### If your Mac sleeps during a scan
+
+A full scan can take a while. While it runs, mac-triage keeps the Mac from **idle**-sleeping (with the built-in `caffeinate`, released as soon as the scan ends). Closing a laptop's lid still puts it to sleep; nothing safe can prevent that, and nothing is lost:
+
+- macOS pauses the scan while the Mac sleeps, and the scan **continues by itself when the Mac wakes**. You do not need to restart it.
+- The summary then says how many times and for how long the Mac slept, leaves that time out of the duration, and names the modules that ran across a sleep. Those modules (for example network connections or running processes) may mix data from before and after the sleep; run them again with `macscan --only NN` if they matter.
+- `report.json` has the same information in its `sleep` field.
+
+For the most complete results, keep the Mac awake and on power during a full scan.
 
 ### Automatic scans
 

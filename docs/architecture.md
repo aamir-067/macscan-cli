@@ -9,7 +9,7 @@ The repository's `src/` folder mirrors this layout. `scripts/build.sh` turns it 
 | `macscan` | CLI front end, linked from `/usr/local/bin/macscan`. Re-executes itself with sudo and a clean environment, validates options, writes a request file, kickstarts the runner LaunchDaemon and follows the live log. `--foreground` runs the engine in the terminal instead. |
 | `bin/macscan-helper` (from `helper/macscan-helper.c`) | Tiny C program started by launchd. Refuses to run unless root, then spawns `/bin/bash core/run.sh` in its own process group, so macOS attributes file access to the helper, which holds Full Disk Access. Forwards signals to the group. |
 | `core/run.sh` | Scan engine (orchestration only): option parsing, auto-scan decision, lock, log, rule updates, module loop, inventory diff, summary, delivery, history, notification. |
-| `core/lib/*.sh` | Engine libraries: `options`, `modules` (metadata and selection), `auto`, `lock`, `rules`, `report` (flags, summary, `report.json`, delivery), `severity` (rubric and acknowledgements), `integrity` (install manifest checks), `execmon` (eslogger capture), `notify`, `text` (sanitizing). |
+| `core/lib/*.sh` | Engine libraries: `options`, `modules` (metadata and selection), `auto`, `lock`, `rules`, `report` (flags, summary, `report.json`, delivery), `severity` (rubric and acknowledgements), `integrity` (install manifest checks), `execmon` (eslogger capture), `power` (keep awake, sleep detection), `notify`, `text` (sanitizing). |
 | `core/common.sh` | Helpers for modules: `section`, `sub`, `flag`, `inv`, `asuser`, `tmo`, `tmpf`, `sql`, `rd`, `sha`, `sig`, `sigf`, `redact`, path classifiers (`is_system_path`, `canon_path`, `user_path`, `is_dev_path`), `root_safe_bin`, download origin checks, `gitleaks_findings`, prune arrays, structure-based discovery. |
 | `core/fda.sh` | Full Disk Access detection (tries several protected folders). |
 | `core/deliver.sh` | Runs **as the user**: receives the finished report as a tar stream, writes it into the report folder, zips it, applies retention. |
@@ -17,7 +17,7 @@ The repository's `src/` folder mirrors this layout. `scripts/build.sh` turns it 
 | `rules/custom.yar`, `rules/all.yarc`, `rules/sets.txt` | Custom YARA rules; compiled bundle (custom + YARA Forge core + Elastic macOS/multi), compiled as the user. |
 | `VERSION`, `config` | Version string; `KEY="VALUE"` settings changed with `macscan --set`. |
 | `manifest.sha256` | Written by the installer; checked by `core/lib/integrity.sh` at the start of every scan and by `macscan --verify`. |
-| `state/` (root only, 700) | `acknowledged.tsv` (`macscan --ignore`), `lock/`, `running.pid`, `request`, `current.log`, `service.log`, `history.log`, `last-full-scan`, `apps.list`, `rules-updated`, `clam-updated`, `fda-status`, `inv/last/*.txt`, `work/` (report staging), `tmp/` (per-scan temp), `undelivered/`. |
+| `state/` (root only, 700) | `acknowledged.tsv` (`macscan --ignore`), `lock/`, `running.pid`, `request`, `current.log`, `service.log`, `history.log`, `last-full-scan`, `apps.list`, `rules-updated`, `clam-updated`, `fda-status`, `inv/last/*.txt`, `work/` (report staging), `tmp/` (per-scan temp), `progress` (running module, for `--status`), `undelivered/`. |
 
 ## LaunchDaemons
 
