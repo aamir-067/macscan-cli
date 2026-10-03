@@ -138,3 +138,12 @@ teardown(){ drop_env; }
   not root_safe_bin "$TEST_TMP/ls"
   not root_safe_bin /nonexistent/thing
 }
+
+@test "trusted_program trusts Apple system binaries and refuses unsigned copies anywhere" {
+  trusted_program /usr/bin/true
+  trusted_program /System/Volumes/Data/../../usr/bin/true || true
+  cp /usr/bin/true "$TEST_TMP/Google Chrome"; codesign --remove-signature "$TEST_TMP/Google Chrome"
+  not trusted_program "$TEST_TMP/Google Chrome"
+  not trusted_program /private/tmp/nonexistent
+  not trusted_program ""
+}

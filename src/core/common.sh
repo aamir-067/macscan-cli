@@ -64,6 +64,22 @@ redact(){ sanitize | perl -pe '
   s#(://[^:/\s]+:)[^@/\s]+@#$1<redacted>@#g;
 '; }
 
+# trusted_program <executable path>: true when a program may hold browser, keychain or
+# wallet files without being flagged. Names are never enough (malware can copy a name):
+# the program must be Apple's, in a sealed system folder, or a validly signed app bundle
+# with a Developer ID team in /Applications.
+trusted_program(){
+  local p; p=$(canon_path "$1")
+  [ -f "$p" ] || return 1
+  if is_system_path "$p"; then codesign --verify "$p" >/dev/null 2>&1; return; fi
+  case "$p" in
+    /Applications/*.app/*|/System/Applications/*.app/*|"$UH"/Applications/*.app/*) ;;
+    *) return 1;;
+  esac
+  codesign --verify "$p" >/dev/null 2>&1 || return 1
+  codesign -dv "$p" 2>&1 | grep -qE '^TeamIdentifier=[A-Z0-9]{10}$'
+}
+
 # Download origins (macOS 27 leaves URLs out of the quarantine database, but each file
 # keeps kMDItemWhereFroms). origin_category <url> prints chat, shortener, fileshare,
 # github-release, hosting, or nothing.

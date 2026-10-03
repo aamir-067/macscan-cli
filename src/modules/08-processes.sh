@@ -26,10 +26,17 @@ section "Processes using deleted files or executables"
 lsof +L1 2>/dev/null | grep -v "/private/var/db/diagnostics" | head -100
 
 section "Processes with password, cookie or keychain files open"
+echo "Trusted only when the program is Apple's (sealed system folder) or a validly signed app in /Applications; a process name alone is never trusted."
 T=$(tmpf)
-lsof -n +c 0 2>/dev/null | grep -E "keychain-db|Login Data|Cookies|key4\.db|logins\.json|cookies\.sqlite|Web Data|Local State|wallet|Exodus|Electrum|com\.apple\.TCC" | awk '{n=$9; for(i=10;i<=NF;i++) n=n" "$i; print $1" | "$2" | "$3" | "n}' | sort -u > "$T"
-cat "$T"
-grep -vE "^(Google Chrome|Google Chrome Helper|firefox|Firefox|Brave Browser|Arc|Microsoft Edge|Safari|com\.apple|securityd|secd|trustd|tccd|Bitwarden|cfprefsd|mds|mds_stores|mdworker|mdworker_shared|loginwindow|accountsd|Electron|Code|Cursor|Slack|Discord|Spotify|Notion|Postman|Claude|Antigravity|Zed|WhatsApp|Telegram|Raycast|Blip|Google Drive|Google Docs|Google Sheets|Google Slides|OpenCode|Anki)" "$T" | while read -r l; do flag "Unexpected process has a sensitive file open: $l"; done
+# lsof writes spaces in command names as \x20; decode them for readability.
+lsof -n +c 0 2>/dev/null | grep -E "keychain-db|Login Data|Cookies|key4\.db|logins\.json|cookies\.sqlite|Web Data|Local State|wallet|Exodus|Electrum|com\.apple\.TCC" \
+  | awk '{n=$9; for(i=10;i<=NF;i++) n=n" "$i; print $2"\t"$1" | "$2" | "$3" | "n}' | sed 's/\\x20/ /g' | sort -u > "$T"
+cut -f2- "$T"
+cut -f1 "$T" | sort -u | while read -r pid; do
+  exe=$(ps -o comm= -p "$pid" 2>/dev/null)
+  if trusted_program "$exe"; then continue; fi
+  grep "^$pid	" "$T" | cut -f2- | while IFS= read -r l; do flag "Unexpected process has a sensitive file open: $l (program: ${exe:-exited})"; done
+done
 rm -f "$T"
 
 section "DYLD injection in running processes"
