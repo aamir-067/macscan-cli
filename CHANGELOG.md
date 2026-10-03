@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-10-03
+
 ### Added
 - `macscan --update` downloads the newest release installer and its checksums from GitHub as root into a root-only folder, verifies the SHA-256 and the version, then upgrades. `macscan --update --check` only reports whether an update exists; `--yes` skips the confirmation.
 - Upgrade-aware installer: it reports whether it installs, upgrades, repairs or downgrades; refuses to downgrade without `--allow-downgrade`; refuses to run during a scan; adds new settings to an existing config without changing existing values; and prints what was kept. New `--help` and `--uninstall` options.
@@ -82,7 +84,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/aamir-067/macscan-cli/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/aamir-067/macscan-cli/compare/v2.2.2...v2.3.0
 [2.2.2]: https://github.com/aamir-067/macscan-cli/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/aamir-067/macscan-cli/compare/v2.2.0...v2.2.1
