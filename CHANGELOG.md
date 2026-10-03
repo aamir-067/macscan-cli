@@ -4,6 +4,13 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- Module 08 trusted processes holding browser, keychain or wallet files by name. Names with spaces never matched (lsof writes them as `\x20`), Apple daemons were missing, and malware could simply copy a trusted name. Trust now requires an Apple program in a sealed system folder or a validly signed app with a Developer ID team; one real scan went from 19 false critical flags to none.
+
+### Added
+- Detection for the PolinRider / TasksJacker campaign (DPRK, 2026), which spreads through developer repositories: a VS Code `folderOpen` task that runs code (`node`, a fake font, `curl`, a shell) is now critical (`Auto-run task runs code on folder open:`); a project `.vscode/settings.json` that turns on `task.allowAutomaticTasks` is high; `.woff`/`.woff2` files that do not start with a real font signature are critical (`Font file is really a program (fake font):`). Only the first 4 bytes of each font are read, as the user.
+- More published loader markers (PolinRider, TasksJacker, ForceMemo) in the injected-code search, which now also covers Python files.
+
 ## [2.2.1] - 2026-10-03
 
 ### Fixed
