@@ -3,7 +3,7 @@
 # shellcheck source=../core/common.sh
 source "$(dirname "$0")/../core/common.sh"
 section "Known injected JavaScript markers"
-grep -rlF --exclude-dir=Library --exclude-dir=.Trash --exclude-dir=.git --exclude-dir=.orbstack --exclude-dir=.npm --exclude-dir=.cache --exclude-dir=.rustup --exclude-dir="$(basename "$OUTBASE")" --include="*.js" --include="*.cjs" --include="*.mjs" --include="*.ts" --include="*.jsx" --include="*.tsx" -e '_$_5ef4' -e '_$jsoIter' -e 'global[_$_' "$UH" 2>/dev/null | while IFS= read -r f; do echo "$f"; flag "Injected malware marker found: $f"; done
+grep -rlF --exclude-dir=Library --exclude-dir=.Trash --exclude-dir=.git --exclude-dir=.orbstack --exclude-dir=.npm --exclude-dir=.cache --exclude-dir=.rustup --exclude-dir="$(basename "$OUTBASE")" --include="*.js" --include="*.py" --include="*.cjs" --include="*.mjs" --include="*.ts" --include="*.jsx" --include="*.tsx" -e '_$_5ef4' -e '_$jsoIter' -e 'global[_$_' -e '_$_1e42' -e 'rmcej%otb%' -e 'Cot%3t=shtP' -e "global['_V']" -e "global['!']" -e 'lzcdrtfxyqiplpd' "$UH" 2>/dev/null | while IFS= read -r f; do echo "$f"; flag "Injected malware marker found: $f"; done
 
 section "Config files with abnormally long lines"
 find "$UH" "${PRUNE[@]}" -type f \( -name "*.config.js" -o -name "*.config.mjs" -o -name "*.config.cjs" -o -name "*.config.ts" -o -name ".eslintrc.js" \) -print 2>/dev/null | while IFS= read -r f; do
@@ -21,8 +21,28 @@ find "$UH" "${PRUNE[@]}" -type f -name package.json -print 2>/dev/null | while I
 done | head -250
 
 section "Editor tasks that run automatically when a folder opens"
+# PolinRider/TasksJacker (DPRK, 2026) hide a task that runs `node <fake font>` or a
+# downloaded script whenever the folder is opened in VS Code, Cursor and similar editors.
 find "$UH" "${PRUNE[@]}" -type f -path "*/.vscode/tasks.json" -print 2>/dev/null | while IFS= read -r t; do
-  rd "$t" | grep -q "folderOpen" && { echo "$t"; rd "$t" | grep -n -B3 -A3 "folderOpen"; flag "Task auto-runs on folder open: $t"; }
+  rd "$t" | grep -q "folderOpen" || continue
+  echo "$t"; rd "$t" | grep -n -B3 -A3 "folderOpen"
+  if rd "$t" | grep -qE '"command"[^"]*"[^"]*(\.woff2?|\.ttf|\bnode |curl |wget |\| *(ba|z)?sh|powershell|bash -c)'; then
+    flag "Auto-run task runs code on folder open: $t"
+  else
+    flag "Task auto-runs on folder open: $t"
+  fi
+done
+
+section "Projects that turn on automatic tasks without asking"
+find "$UH" "${PRUNE[@]}" -type f -path "*/.vscode/settings.json" -print 2>/dev/null | while IFS= read -r f; do
+  rd "$f" | grep -qE '"task\.allowAutomaticTasks"[[:space:]]*:[[:space:]]*(true|"on")' && { echo "$f"; flag "Project turns on automatic tasks without asking: $f"; }
+done
+
+section "Font files that are really programs"
+echo "A real .woff file starts with wOFF and a real .woff2 with wOF2; anything else is suspicious (only 4 bytes are read)."
+find "$UH" "${PRUNE[@]}" -type f \( -name "*.woff" -o -name "*.woff2" \) -size -5000k -print 2>/dev/null | head -5000 | while IFS= read -r f; do
+  m=$(rd "$f" 2>/dev/null | head -c 4 | LC_ALL=C tr -cd '[:alnum:]')
+  case "$m" in wOFF|wOF2) ;; *) echo "$f (starts with: ${m:-?})"; flag "Font file is really a program (fake font): $f";; esac
 done
 
 section "Active git hooks in repositories"

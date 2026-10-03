@@ -17,6 +17,8 @@ critical	Install integrity check failed:
 critical	Unexpected file in install folder:
 critical	Install file not owned by root or writable by others:
 critical	Service definition changed:
+critical	Auto-run task runs code on folder open:
+critical	Font file is really a program (fake font):
 high	YARA match:
 high	ClamAV detection:
 high	System Integrity Protection is not enabled
@@ -49,6 +51,7 @@ high	Hidden launch item file:
 high	Process running from a temp or shared folder:
 high	Process running from a hidden folder in home:
 high	Task auto-runs on folder open:
+high	Project turns on automatic tasks without asking:
 high	Config file with an abnormally long line:
 high	SUID/SGID file outside system paths:
 high	crontab exists for

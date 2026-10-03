@@ -26,7 +26,7 @@ mod(){ MODULE="$1" PATH="$REPO/tests/stubs:/usr/bin:/bin:/usr/sbin:/sbin" run /b
   mkdir -p "$UH/proj/.vscode"
   printf '{"version":"2.0.0","tasks":[{"label":"x","command":"node x.js","runOptions":{"runOn":"%s"}}]}\n' "folder""Open" > "$UH/proj/.vscode/tasks.json"
   mod 17
-  grep -q "Task auto-runs on folder open: $UH/proj/.vscode/tasks.json" "$RUN/.flags.raw"
+  grep -q "Auto-run task runs code on folder open: $UH/proj/.vscode/tasks.json" "$RUN/.flags.raw"
 }
 
 @test "17 flags the known injected loader marker in project source" {
@@ -123,4 +123,28 @@ yara_rules(){
   grep -qxF "[21] Possible password file (by name): $UH/Documents/Apple Recovery Key.pdf" "$RUN/.flags.raw"
   not grep -q "app/.env\|data.csv" "$RUN/.flags.raw"
   not grep -q "pw-not-real\|abc" <<<"$output"
+}
+
+@test "17 flags the PolinRider fake-font task as critical, with its settings and the fake font" {
+  mkdir -p "$UH/proj/.vscode" "$UH/proj/public/fonts" "$UH/ok/.vscode" "$UH/ok/public/fonts"
+  printf '{"tasks":[{"label":"eslint-check","command":"node ./public/fonts/fa-solid-900.woff2","runOptions":{"runOn":"%s"}}]}\n' "folder""Open" > "$UH/proj/.vscode/tasks.json"
+  printf '{"task.allowAutomaticTasks": true}\n' > "$UH/proj/.vscode/settings.json"
+  printf 'var a=1;\n' > "$UH/proj/public/fonts/fa-solid-900.woff2"
+  printf 'wOF2\000\001rest' > "$UH/ok/public/fonts/real.woff2"
+  printf '{"tasks":[{"label":"lint","command":"npm run lint","runOptions":{"runOn":"%s"}}]}\n' "folder""Open" > "$UH/ok/.vscode/tasks.json"
+  mod 17
+  grep -qxF "[17] Auto-run task runs code on folder open: $UH/proj/.vscode/tasks.json" "$RUN/.flags.raw"
+  grep -qxF "[17] Project turns on automatic tasks without asking: $UH/proj/.vscode/settings.json" "$RUN/.flags.raw"
+  grep -qxF "[17] Font file is really a program (fake font): $UH/proj/public/fonts/fa-solid-900.woff2" "$RUN/.flags.raw"
+  grep -qxF "[17] Task auto-runs on folder open: $UH/ok/.vscode/tasks.json" "$RUN/.flags.raw"
+  not grep -q "real.woff2" "$RUN/.flags.raw"
+}
+
+@test "17 finds the newer published loader markers, also in Python files" {
+  mkdir -p "$UH/py" "$UH/js"
+  printf 'print(1)\n# %s\n' "lzcdrtfx""yqiplpd" > "$UH/py/setup.py"
+  printf 'var a="%s";\n' "rmcej%ot""b%" > "$UH/js/app.js"
+  mod 17
+  grep -qF "Injected malware marker found: $UH/py/setup.py" "$RUN/.flags.raw"
+  grep -qF "Injected malware marker found: $UH/js/app.js" "$RUN/.flags.raw"
 }
