@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-10-03
+
 ### Added
 - Sleep-aware scans. While a scan runs, the Mac is kept from idle sleep (`caffeinate -i`, released when the scan ends). If the Mac still sleeps (for example the lid is closed), the scan pauses and continues on wake as before, and now the summary and `report.json` (`sleep` field) report how many times and how long it slept, exclude that time from the duration, and name the modules that ran across a sleep.
 - `macscan --status` shows the running module, its position and how long the scan has been running.
@@ -72,7 +74,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.2.2...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/aamir-067/macscan-cli/compare/v2.2.2...v2.3.0
 [2.2.2]: https://github.com/aamir-067/macscan-cli/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/aamir-067/macscan-cli/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/aamir-067/macscan-cli/compare/v2.1.0...v2.2.0
