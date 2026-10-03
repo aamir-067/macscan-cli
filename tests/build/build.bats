@@ -46,7 +46,7 @@ setup_file(){
 }
 
 @test "installer checks that the install path is root-owned and not writable by others" {
-  grep -q 'safe_dir "$d" || exit 1' "$OUTDIR/install-mac-triage.sh"
+  grep -q 'safe_dir "$d" || return 1' "$OUTDIR/install-mac-triage.sh"
   grep -q 'Refusing to install: $d is writable by group or others' "$OUTDIR/install-mac-triage.sh"
 }
 
