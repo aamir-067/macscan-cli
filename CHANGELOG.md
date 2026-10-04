@@ -4,6 +4,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- Homebrew install: `brew install aamir-067/tap/macscan`, then `macscan-setup`. The formula installs the verified release installer and a `macscan-setup` command; the scanner itself still installs root-owned under `/usr/local/mac-triage`. `scripts/update-tap.sh` renders the formula for each release.
+
 ## [2.4.0] - 2026-10-03
 
 ### Added

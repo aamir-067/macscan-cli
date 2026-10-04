@@ -3,10 +3,9 @@
 # or upgrades the scanner itself under /usr/local/mac-triage, owned by root, which its
 # security model requires (Homebrew's own folders are writable by the user).
 class Macscan < Formula
-  desc "Deep, read-only security scanner for macOS: malware, stealers, persistence, supply chain"
+  desc "Read-only macOS security scanner for malware, stealers and persistence"
   homepage "https://github.com/aamir-067/macscan-cli"
   url "https://github.com/aamir-067/macscan-cli/releases/download/v@VERSION@/install-mac-triage.sh"
-  version "@VERSION@"
   sha256 "@SHA256@"
   license "MIT"
 
@@ -17,7 +16,7 @@ class Macscan < Formula
     (bin/"macscan-setup").write <<~EOS
       #!/bin/bash
       # Installs or upgrades macscan from the installer Homebrew downloaded and verified.
-      exec /usr/bin/sudo /bin/bash "#{libexec}/install-mac-triage.sh" "$@"
+      exec /usr/bin/sudo /bin/bash "#{opt_libexec}/install-mac-triage.sh" "$@"
     EOS
     chmod 0755, bin/"macscan-setup"
   end

@@ -55,4 +55,5 @@ Never commit real malware. Build fixtures at test time, and split strings that l
 scripts/bump-version.sh minor     # or patch / major / X.Y.Z; moves Unreleased notes under the new version
 make release                      # tests, build, then tag vX.Y.Z
 git push origin main --tags       # the release workflow publishes the installer and checksums
+scripts/update-tap.sh ../homebrew-tap   # after the release is published: update the Homebrew formula, commit, push
 ```

@@ -64,7 +64,16 @@ Everything else is built into macOS. The tool is plain Bash 3.2 (the `/bin/bash`
 
 ## Install
 
-### From a release (recommended)
+### With Homebrew (recommended)
+
+```bash
+brew install aamir-067/tap/macscan
+macscan-setup        # installs or upgrades the scanner; asks for your password
+```
+
+Homebrew downloads the release installer and checks it against the checksum in the [formula](https://github.com/aamir-067/homebrew-tap). `macscan-setup` then installs the scanner into `/usr/local/mac-triage`, owned by root. It is a two-step install on purpose: macscan runs as root, and Homebrew's own folders are writable by your user account, so the scanner must not run from there. Upgrade later with `brew upgrade macscan && macscan-setup` or `macscan --update`.
+
+### From a release
 
 ```bash
 curl -fLO https://github.com/aamir-067/macscan-cli/releases/latest/download/install-mac-triage.sh
@@ -236,7 +245,7 @@ Be clear about what a scan can and cannot tell you:
 macscan --uninstall
 ```
 
-This removes the tool and its services and keeps your reports. `sudo bash install-mac-triage.sh --uninstall` does the same. Also remove `macscan-helper` from Full Disk Access in System Settings. Optionally `brew uninstall yara clamav`.
+This removes the tool and its services and keeps your reports. `sudo bash install-mac-triage.sh --uninstall` does the same. If you installed with Homebrew: `macscan-setup --uninstall`, then `brew uninstall macscan`. Also remove `macscan-helper` from Full Disk Access in System Settings. Optionally `brew uninstall yara clamav`.
 
 ## Development
 
