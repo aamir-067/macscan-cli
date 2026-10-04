@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-10-04
+
 ### Added
 - `macscan doctor` checks the whole setup (install integrity, helper signature, command link, Full Disk Access, services, YARA and ClamAV freshness, report folder and free space, undelivered reports, last full scan, available updates) and prints the exact command that fixes each problem. It exits non-zero when something needs fixing.
 - Help pages: `macscan help` shows a short overview with examples; `macscan help <topic>` explains scan, reports, flags, auto, update, settings, privacy and troubleshooting; `macscan help options` lists every option. A test keeps the option list in sync with the engine.
@@ -94,7 +96,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.4.1...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/aamir-067/macscan-cli/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/aamir-067/macscan-cli/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/aamir-067/macscan-cli/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/aamir-067/macscan-cli/compare/v2.2.2...v2.3.0
