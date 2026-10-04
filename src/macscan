@@ -1,67 +1,21 @@
 #!/bin/bash
 # macscan: command-line front end for mac-triage.
-ROOT="/usr/local/mac-triage"; STATE="$ROOT/state"; VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || echo unknown)"
+ROOT="/usr/local/mac-triage"; STATE="$ROOT/state"
+VERSION="$(cat "$ROOT/VERSION" 2>/dev/null || cat "$(dirname "${BASH_SOURCE[0]}")/../VERSION" 2>/dev/null || echo unknown)"
 RUN_LABEL="com.mactriage.runner"; AUTO_LABEL="com.mactriage.auto"
 MT_REPO="aamir-067/macscan-cli"
 MT_API="https://api.github.com/repos/$MT_REPO/releases/latest"
 MT_DL="https://github.com/$MT_REPO/releases/download"
 RUN_PLIST="/Library/LaunchDaemons/$RUN_LABEL.plist"; AUTO_PLIST="/Library/LaunchDaemons/$AUTO_LABEL.plist"
 
-usage(){ echo "macscan $VERSION: deep, read-only security scanner for macOS"; cat <<'USAGE'
-
-SCANNING
-  macscan                      Full deep scan (background service with Full Disk Access, live progress)
-  macscan --quick              Fast scan: skips file-system sweep, logs, YARA and ClamAV
-  macscan --foreground         Run inside this terminal instead (terminal needs Full Disk Access)
-  macscan --only 05,15         Run only these modules (see --modules)
-  macscan --skip 19,20         Skip these modules
-  macscan --days N             Look-back window for "recent" checks
-  macscan --no-yara            Skip the YARA scan
-  macscan --no-clamav          Skip the ClamAV scan
-  macscan --clamav-full        ClamAV scans your whole home folder (slow)
-  macscan --no-logs            Skip the unified log module
-  macscan --include-trash      Also scan the Trash (file sweep, YARA, ClamAV)
-  macscan --output /full/path  Save this scan somewhere else
-  macscan --only-if-findings   Delete the report if nothing suspicious is found
-  macscan --always-report      Keep the report even when clean
-  macscan --no-zip             Don't create a zip
-  macscan --no-notify          No notification when done
-  macscan --open               Open the report when done
-  macscan --keep N             Keep N reports after this scan
-
-AUTOMATIC SCANS
-  macscan --auto on|off        Weekly scans plus a scan when a new app is installed
-  macscan --status             Schedule, running scan and its progress, last result, tool versions
-  macscan --stop               Stop a running scan (manual or automatic)
-  macscan --log                Watch a running scan
-
-REPORTS
-  macscan --ignore "TEXT" --reason "WHY"
-                               Acknowledge flags containing TEXT: they move to an
-                               "Acknowledged" section and stop counting
-  macscan --ignored            List acknowledged flags
-  macscan --unignore TEXT|N    Stop acknowledging (exact TEXT, or number from --ignored)
-  macscan --last               Open the latest full report
-  macscan --reports            List saved reports
-  macscan --history            Results of past scans
-  macscan --clean              Apply report cleanup now
-
-UPDATING
-  macscan --update --check     See if a newer version of macscan is available
-  macscan --update             Download, verify and install the newest version (settings,
-                               history and reports are kept); --yes skips the question
-
-MAINTENANCE
-  macscan --update-rules       Update YARA rules and ClamAV signatures now
-  macscan --check-fda          Check the scanner has Full Disk Access
-  macscan --verify             Check the installed files against the install manifest
-  macscan --modules            List scan modules
-  macscan --config             Show settings
-  macscan --set KEY=VALUE      Change a setting, e.g. KEEP_REPORTS=3 or AUTO_INTERVAL_DAYS=14
-  macscan --uninstall          Remove mac-triage (your reports are kept)
-  macscan --version | --help
-USAGE
+# Help pages live in core/lib/help.sh (found next to this script when run from a checkout).
+load_help(){
+  local h="$ROOT/core/lib/help.sh"
+  [ -f "$h" ] || h="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/core/lib/help.sh"
+  # shellcheck source=core/lib/help.sh
+  source "$h"
 }
+usage(){ load_help; help_overview; }
 
 
 # Log and history text can contain names chosen by an attacker; never print it raw.
@@ -125,6 +79,74 @@ update(){
   if download_release "$v" "$tmp"; then /bin/bash "$tmp/install-mac-triage.sh"; rc=$?; else rc=1; fi
   rm -rf "$tmp"
   return "$rc"
+}
+
+# doctor: checks the whole setup and prints the exact fix for each problem.
+doctor(){
+  local issues=0 notes=0 now fda age v d free
+  now=$(date +%s)
+  ok(){ printf '  ok    %s\n' "$1"; }
+  fix(){ printf '  FIX   %s\n' "$1"; [ -n "${2:-}" ] && printf '        -> %s\n' "$2"; issues=$((issues+1)); }
+  note(){ printf '  NOTE  %s\n' "$1"; [ -n "${2:-}" ] && printf '        -> %s\n' "$2"; notes=$((notes+1)); }
+  echo "macscan doctor (version $VERSION)"
+  echo
+  echo "Installation"
+  if /bin/bash "$ROOT/core/run.sh" --task verify >/dev/null 2>&1; then ok "Installed files match the install manifest"
+  else fix "Installed files changed, or the install folder is writable by others (treat as suspicious)" "details: macscan verify; repair: macscan update --yes (or macscan-setup)"; fi
+  if [ -x "$ROOT/bin/macscan-helper" ] && codesign --verify "$ROOT/bin/macscan-helper" >/dev/null 2>&1; then ok "Full Disk Access helper is present and signed"
+  else fix "The Full Disk Access helper is missing or its signature is broken" "repair: macscan update --yes (or macscan-setup)"; fi
+  if [ "$(readlink /usr/local/bin/macscan 2>/dev/null)" = "$ROOT/macscan" ]; then ok "The macscan command is linked in /usr/local/bin"
+  else fix "/usr/local/bin/macscan is missing or points elsewhere" "repair: macscan update --yes (or macscan-setup)"; fi
+  fda=$(cat "$STATE/fda-status" 2>/dev/null)
+  case "$fda" in
+    yes*) ok "Full Disk Access: $fda";;
+    no*) fix "Full Disk Access is off ($fda): scans miss protected places" "System Settings > Privacy & Security > Full Disk Access: add $ROOT/bin/macscan-helper, then: macscan check-fda";;
+    *) note "Full Disk Access has not been checked yet" "macscan check-fda";;
+  esac
+  echo
+  echo "Services"
+  if launchctl print "system/$RUN_LABEL" >/dev/null 2>&1; then ok "Scan service is loaded"; else fix "The scan service is not loaded" "macscan install-services"; fi
+  if [ "$AUTO" = on ]; then
+    if launchctl print "system/$AUTO_LABEL" >/dev/null 2>&1; then ok "Automatic scans are on (every $AUTO_INTERVAL_DAYS days, and when new apps appear)"
+    else fix "Automatic scans are on in settings, but their service is not loaded" "macscan auto on"; fi
+  else note "Automatic scans are off" "turn on: macscan auto on"; fi
+  echo
+  echo "Scanners"
+  if [ -x /opt/homebrew/bin/yara ]; then
+    age=$(( (now - $(cat "$STATE/rules-updated" 2>/dev/null || echo 0)) / 86400 ))
+    if [ -s "$ROOT/rules/all.yarc" ] && [ "$age" -le 14 ]; then ok "YARA rules: $(cat "$ROOT/rules/sets.txt" 2>/dev/null), updated $age day(s) ago"
+    else note "YARA rules are missing or older than 14 days" "macscan update-rules"; fi
+  else note "YARA is not installed, so module 19 is skipped" "brew install yara, then: macscan update-rules"; fi
+  if [ -x /opt/homebrew/bin/clamscan ]; then
+    age=$(( (now - $(cat "$STATE/clam-updated" 2>/dev/null || echo 0)) / 86400 ))
+    if ls /opt/homebrew/var/lib/clamav/*.c[lv]d >/dev/null 2>&1 && [ "$age" -le 7 ]; then ok "ClamAV signatures updated $age day(s) ago"
+    else note "ClamAV signatures are missing or older than 7 days" "macscan update-rules"; fi
+  else note "ClamAV is not installed, so module 20 is skipped" "brew install clamav, then: macscan update-rules"; fi
+  echo
+  echo "Reports"
+  if [ -L "$REPORT_DIR" ]; then fix "The report folder is a symlink; reports will not be saved there" "macscan set REPORT_DIR=/Users/you/Documents/mac-triage-reports"
+  elif [ -d "$REPORT_DIR" ]; then ok "Report folder: $REPORT_DIR"
+  else note "The report folder does not exist yet; the first scan creates it ($REPORT_DIR)"; fi
+  d="$REPORT_DIR"; while [ ! -d "$d" ] && [ "$d" != / ]; do d=$(dirname "$d"); done
+  free=$(df -Pk "$d" 2>/dev/null | awk 'NR==2 {print int($4/1024)}')
+  if [ -n "$free" ] && [ "$free" -lt 1024 ]; then note "Less than 1 GB free where reports are saved (${free} MB)" "free up disk space"; fi
+  if [ -n "$(ls -A "$STATE/undelivered" 2>/dev/null)" ]; then
+    note "Some reports could not be saved and are kept in $STATE/undelivered" "sudo ditto $STATE/undelivered ~/Desktop/macscan-undelivered && sudo chown -R \$USER ~/Desktop/macscan-undelivered"
+  fi
+  age=$(cat "$STATE/last-full-scan" 2>/dev/null || echo 0)
+  if [ "$age" -eq 0 ]; then note "No full scan has finished yet" "macscan"
+  elif [ $(( (now - age) / 86400 )) -gt $(( AUTO_INTERVAL_DAYS * 2 )) ]; then note "The last full scan was $(( (now - age) / 86400 )) days ago" "macscan"
+  else ok "Last full scan: $(( (now - age) / 86400 )) day(s) ago"; fi
+  echo
+  echo "Version"
+  v=$(latest_version)
+  if [ -z "$v" ]; then note "Could not check GitHub for a newer version (offline?)"
+  elif [ "$(version_cmp "$v" "$VERSION")" = 1 ]; then note "Version $v is available (installed: $VERSION)" "macscan update"
+  else ok "Up to date ($VERSION)"; fi
+  echo
+  if [ "$issues" -eq 0 ] && [ "$notes" -eq 0 ]; then echo "Everything looks good."
+  else echo "$issues problem(s) to fix, $notes note(s)."; fi
+  [ "$issues" -eq 0 ]
 }
 
 # progress_line: "Progress: module 12/24 (12-applications) for 3 min, scan started 14:02 (21 min ago)".
@@ -319,7 +341,15 @@ list_modules(){
 }
 
 main(){
-case "${1:-}" in -h|--help|help) usage; exit 0;; -v|--version) echo "macscan $VERSION"; exit 0;; esac
+case "${1:-}" in
+  -h|--help|help) shift; load_help; help_main "${1:-}"; exit $?;;
+  -v|--version|version) echo "macscan $VERSION"; exit 0;;
+  scan) shift;;
+  -*|"") ;;
+  *) load_help; a=$(cli_alias "$1")
+     if [ -z "$a" ]; then echo "Unknown command: $1"; echo "See: macscan help"; exit 2; fi
+     shift; set -- "$a" "$@";;
+esac
 [ "$EUID" -ne 0 ] && exec sudo "$ROOT/macscan" "$@"
 # Start over with a minimal environment so nothing from the caller (HOME, PERL5OPT, ...) reaches root.
 if [ "${MACSCAN_CLEAN_ENV:-}" != 1 ]; then
@@ -347,6 +377,7 @@ case "${1:-}" in
   --check-fda) start_job --task check-fda;;
   --verify) /bin/bash "$ROOT/core/run.sh" --task verify;;
   --update) shift; update "$@";;
+  --doctor) doctor;;
   --modules) list_modules;;
   --config) grep -v '^#' "$ROOT/config";;
   --set) set_config "${2:-}";;
