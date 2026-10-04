@@ -74,3 +74,12 @@ setup_file(){
   run bash -c 'cd "$1" && git ls-files ":!tests/build/build.bats" | xargs grep -nE "github\.com/aamir-067/|--repo aamir-067/" | grep -vE "aamir-067/(macscan-cli|homebrew-tap)"' _ "$REPO"
   [ -z "$output" ] || { echo "$output"; return 1; }
 }
+
+@test "the Homebrew formula template renders to valid Ruby with no placeholders left" {
+  command -v ruby >/dev/null || skip "ruby is not available"
+  sed -e 's/@VERSION@/9.9.9/g' -e "s/@SHA256@/$(printf '%064d' 0)/g" "$REPO/packaging/homebrew/macscan.rb.in" > "$BATS_TEST_TMPDIR/macscan.rb"
+  ruby -c "$BATS_TEST_TMPDIR/macscan.rb" >/dev/null
+  not grep -q '@[A-Z0-9]*@' "$BATS_TEST_TMPDIR/macscan.rb"
+  grep -q 'releases/download/v9.9.9/install-mac-triage.sh' "$BATS_TEST_TMPDIR/macscan.rb"
+  not grep -qE 'sudo macscan-setup' "$BATS_TEST_TMPDIR/macscan.rb"
+}

@@ -1,0 +1,41 @@
+# Homebrew formula for macscan (mac-triage), a read-only security scanner for macOS.
+# Homebrew installs the verified release installer; `macscan-setup` then installs
+# or upgrades the scanner itself under /usr/local/mac-triage, owned by root, which its
+# security model requires (Homebrew's own folders are writable by the user).
+class Macscan < Formula
+  desc "Deep, read-only security scanner for macOS: malware, stealers, persistence, supply chain"
+  homepage "https://github.com/aamir-067/macscan-cli"
+  url "https://github.com/aamir-067/macscan-cli/releases/download/v@VERSION@/install-mac-triage.sh"
+  version "@VERSION@"
+  sha256 "@SHA256@"
+  license "MIT"
+
+  depends_on :macos
+
+  def install
+    libexec.install "install-mac-triage.sh"
+    (bin/"macscan-setup").write <<~EOS
+      #!/bin/bash
+      # Installs or upgrades macscan from the installer Homebrew downloaded and verified.
+      exec /usr/bin/sudo /bin/bash "#{libexec}/install-mac-triage.sh" "$@"
+    EOS
+    chmod 0755, bin/"macscan-setup"
+  end
+
+  def caveats
+    <<~EOS
+      macscan runs as root from /usr/local/mac-triage. To install or upgrade it, run:
+        macscan-setup
+      It asks for your password. (Do not prefix it with sudo; it calls sudo itself.)
+
+      Then give Full Disk Access to /usr/local/mac-triage/bin/macscan-helper when asked,
+      and start a scan with:  macscan
+      Uninstall the scanner with:  macscan-setup --uninstall
+    EOS
+  end
+
+  test do
+    assert_match "mac-triage installer #{version}",
+                 shell_output("/bin/bash #{libexec}/install-mac-triage.sh --version")
+  end
+end
