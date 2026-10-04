@@ -4,6 +4,11 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- `macscan doctor` checks the whole setup (install integrity, helper signature, command link, Full Disk Access, services, YARA and ClamAV freshness, report folder and free space, undelivered reports, last full scan, available updates) and prints the exact command that fixes each problem. It exits non-zero when something needs fixing.
+- Help pages: `macscan help` shows a short overview with examples; `macscan help <topic>` explains scan, reports, flags, auto, update, settings, privacy and troubleshooting; `macscan help options` lists every option. A test keeps the option list in sync with the engine.
+- Plain-word commands: `macscan status`, `macscan doctor`, `macscan update`, `macscan last` and so on work like their `--` forms; unknown words are refused instead of starting a scan.
+
 ## [2.4.1] - 2026-10-04
 
 ### Added

@@ -131,13 +131,17 @@ Re-check after every upgrade. If the helper was recompiled, its code signature c
 ## Usage
 
 ```bash
+macscan --quick         # a few minutes: skips the file-system sweep, logs, YARA and ClamAV
 macscan                 # full deep scan in the background service, with live progress
-macscan --quick         # skips the file-system sweep, logs, YARA and ClamAV (a few minutes)
 macscan --only 05,15    # just persistence and browsers
-macscan --status        # schedule, running scan, last result, tool versions
-macscan --last          # open the latest full report
-macscan --help          # everything else
+macscan status          # is a scan running, its progress, the last result, tool versions
+macscan doctor          # check the whole setup; prints the exact fix for any problem
+macscan last            # open the latest full report
+macscan help            # examples; macscan help <topic> for scan, reports, flags, auto,
+                        # update, settings, privacy, troubleshooting; macscan help options
 ```
+
+Commands work with or without dashes: `macscan status` and `macscan --status` are the same.
 
 Ctrl+C stops *watching*; the scan keeps running. `macscan --log` resumes watching, `macscan --status` shows which module is running and for how long, and `macscan --stop` cancels.
 
