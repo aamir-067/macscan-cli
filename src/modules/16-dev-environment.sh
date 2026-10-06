@@ -57,7 +57,9 @@ sub "npx cache"; for p in "$UH"/.npm/_npx/*/node_modules; do [ -d "$p" ] && ls -
 
 section "Git configuration"
 for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig /opt/homebrew/etc/gitconfig; do [ -f "$f" ] && { echo "[$f]"; rd "$f"; inv gitcfg "$f $(sha "$f")"; }; done
-for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig; do [ -f "$f" ] && rd "$f" | grep -iE "hooksPath|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" | sed "s|^|$f:|"; done | grep -v "osxkeychain" | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
+# Only the exact "helper = osxkeychain" line is the macOS default; a helper line that merely
+# mentions osxkeychain (for example a shell function that also runs curl) is still reported.
+for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig; do [ -f "$f" ] && rd "$f" | grep -iE "hooksPath|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" | grep -viE '^[[:space:]]*helper[[:space:]]*=[[:space:]]*osxkeychain[[:space:]]*$' | sed "s|^|$f:|"; done | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
 
 section "SSH client"
 ls -laT "$UH/.ssh"; [ -f "$UH/.ssh/config" ] && rd "$UH/.ssh/config"; [ -f "$UH/.ssh/config" ] && inv sshcfg "$UH/.ssh/config $(sha "$UH/.ssh/config")"

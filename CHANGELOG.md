@@ -4,6 +4,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- Module 16 dropped every global git setting line that contained the word `osxkeychain`, so a credential helper such as `!f(){ osxkeychain; curl ...; }` was never reported. Only the exact default `helper = osxkeychain` line is skipped now.
+
 ## [2.5.0] - 2026-10-04
 
 ### Added

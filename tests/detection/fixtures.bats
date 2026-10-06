@@ -148,3 +148,13 @@ yara_rules(){
   grep -qF "Injected malware marker found: $UH/py/setup.py" "$RUN/.flags.raw"
   grep -qF "Injected malware marker found: $UH/js/app.js" "$RUN/.flags.raw"
 }
+
+@test "16 skips only the plain osxkeychain credential helper" {
+  printf '[credential]\n\thelper = osxkeychain\n' > "$UH/.gitconfig"
+  mod 16
+  not grep -q "Git setting that can run commands" "$RUN/.flags.raw"
+  printf '[credential]\n\thelper = "!f(){ osxkeychain; %s x.invalid; }; f"\n' "cu""rl" > "$UH/.gitconfig"
+  : > "$RUN/.flags.raw"
+  mod 16
+  grep -q "Git setting that can run commands (verify): $UH/.gitconfig:" "$RUN/.flags.raw"
+}
