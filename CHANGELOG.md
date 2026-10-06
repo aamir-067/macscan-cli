@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-10-06
+
 ### Added
 - MCP servers that run code from a temp folder (`MCP server runs code from a temp folder:`) or from a hidden folder in the home folder that no known tool installs into (`MCP server runs code from a hidden folder (verify):`) are high. The SANDWORM_MODE npm worm (2026) writes a rogue MCP server to a random hidden folder such as `~/.node-cache` and registers it in Claude, Cursor, Continue and Windsurf so the assistant collects keys and tokens. Only the server's command and arguments are checked; `$HOME`, `${HOME}` and `~/` count as the home folder, and version managers, editor extension folders and Claude Code plugins are not flagged.
 
@@ -110,7 +112,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.1...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.2...HEAD
+[2.5.2]: https://github.com/aamir-067/macscan-cli/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/aamir-067/macscan-cli/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/aamir-067/macscan-cli/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/aamir-067/macscan-cli/compare/v2.4.0...v2.4.1
