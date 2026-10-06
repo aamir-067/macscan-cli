@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.5.3] - 2026-10-06
+
 ### Added
 - More published stealer indicators. Home-folder files `~/.mainhelper` (AMOS backdoor) and `~/.pwd`, `~/.botid`, `~/.uninstalled`, `~/.chost` (Odyssey) join the critical `File name used by known Mac stealers present:` list. `/tmp/out.zip`, `/tmp/socks` and `/tmp/update` are high (`Temp file name used by known Mac stealers (verify):`). The AMOS launch label `com.finder.helper` is critical (`Launch item name used by known Mac stealers:`). A launch item with a Google, Apple or Microsoft label that runs an interpreter or a script, like SHub Reaper's fake `com.google.keystone.agent`, is high (`Launch item uses a vendor name but runs a script:`).
 
@@ -118,7 +120,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.2...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.3...HEAD
+[2.5.3]: https://github.com/aamir-067/macscan-cli/compare/v2.5.2...v2.5.3
 [2.5.2]: https://github.com/aamir-067/macscan-cli/compare/v2.5.1...v2.5.2
 [2.5.1]: https://github.com/aamir-067/macscan-cli/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/aamir-067/macscan-cli/compare/v2.4.1...v2.5.0
