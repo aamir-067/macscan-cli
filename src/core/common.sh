@@ -30,6 +30,9 @@ is_self(){ case "$1" in "$ROOT"/*|*com.mactriage.*) return 0;; esac; return 1; }
 # the same file as /private/tmp/x. Strip that prefix before judging where something lives.
 canon_path(){ case "$1" in /System/Volumes/Data/*) printf '%s\n' "${1#/System/Volumes/Data}";; *) printf '%s\n' "$1";; esac; }
 is_system_path(){ case "$1" in /System/Volumes/Data/*) return 1;; /System/*|/usr/libexec/*|/usr/sbin/*|/sbin/*|/bin/*|/usr/bin/*|/Library/Apple/*) return 0;; esac; return 1; }
+# is_interpreter <program>: true for shells and script runners, including /usr/bin/env, which
+# launch items use to start a script without naming the interpreter's path.
+is_interpreter(){ case "${1##*/}" in osascript|bash|sh|zsh|dash|ksh|csh|tcsh|fish|python*|node|perl*|ruby|deno|bun|php|swift|tclsh|lua|curl|env) return 0;; esac; return 1; }
 is_dev_path(){ case "$1" in /opt/homebrew/*|/usr/local/Cellar/*|/usr/local/bin/*|"$UH"/.nvm/*|"$UH"/.bun/*|"$UH"/.cargo/*|"$UH"/.rustup/*|"$UH"/.local/*|"$UH"/.npm/*|"$UH"/go/*|"$UH"/.orbstack/*|*/node_modules/*|*/target/debug/*|*/target/release/*) return 0;; esac; return 1; }
 
 sig(){

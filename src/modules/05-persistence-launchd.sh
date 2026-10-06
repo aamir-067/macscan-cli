@@ -30,15 +30,14 @@ for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAge
     if [ -n "$tgt" ]; then
       if [ -e "$tgt" ]; then printf "  target: "; sigf "$tgt"; else echo "  target missing: $tgt"; fi
       case "$(canon_path "$tgt")" in */tmp/*|/Users/Shared/*|/private/var/folders/*|/var/folders/*|"$UH"/.*) flag "Launch item runs from an unusual location: $f -> $tgt";; esac
-      case "$tgt" in */osascript|*/bash|*/sh|*/zsh|*/python*|*/node|*/perl|*/curl|*/ruby|*/deno|*/bun) flag "Launch item runs an interpreter directly: $f -> $args";; esac
+      is_interpreter "$tgt" && flag "Launch item runs an interpreter directly: $f -> $args"
       # SHub Reaper (SentinelOne, 2026) registers com.google.keystone.agent for a bash script in
       # ~/Library/Application Support/Google/GoogleUpdate.app. Real Google, Apple and Microsoft
       # agents run signed programs, never an interpreter or a script.
       case "$label" in com.google.*|com.apple.*|com.microsoft.*)
-        case "$tgt" in
-          */osascript|*/bash|*/sh|*/zsh|*/python*|*/node|*/perl|*/ruby) flag "Launch item uses a vendor name but runs a script: $f -> $tgt";;
-          *) [ -f "$tgt" ] && ! file -b "$tgt" 2>/dev/null | grep -q "Mach-O" && flag "Launch item uses a vendor name but runs a script: $f -> $tgt";;
-        esac;;
+        if is_interpreter "$tgt" || { [ -f "$tgt" ] && ! file -b "$tgt" 2>/dev/null | grep -q "Mach-O"; }; then
+          flag "Launch item uses a vendor name but runs a script: $f -> $tgt"
+        fi;;
       esac
     fi
     [ -n "$(find "$f" -Btime -"$DAYS" 2>/dev/null)" ] && flag "Launch item created in the last $DAYS days: $f"

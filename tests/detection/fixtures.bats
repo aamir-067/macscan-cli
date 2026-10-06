@@ -235,3 +235,11 @@ launch_agent(){ # <file> <label> <program>
   grep -qxF "[05] Launch item uses a vendor name but runs a script: $la/com.google.keystone.agent.plist -> $gu/GoogleUpdate" "$RUN/.flags.raw"
   not grep -q "com.google.real.plist ->" "$RUN/.flags.raw"
 }
+
+@test "05 treats /usr/bin/env as an interpreter" {
+  la="$UH/Library/LaunchAgents"
+  launch_agent "$la/test.env.plist" test.env /usr/bin/env
+  /usr/bin/plutil -insert ProgramArguments.1 -string python3 "$la/test.env.plist"
+  mod 05
+  grep -qF "[05] Launch item runs an interpreter directly: $la/test.env.plist -> " "$RUN/.flags.raw"
+}

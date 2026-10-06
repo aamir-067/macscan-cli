@@ -169,3 +169,12 @@ teardown(){ drop_env; }
   [[ "$output" != *".zshrc"* && "$output" != *"other.zip"* ]] || return 1
   [ "$status" -eq 0 ]
 }
+
+@test "is_interpreter covers env, other shells and script runners, not ordinary programs" {
+  is_interpreter /usr/bin/env
+  is_interpreter /bin/dash
+  is_interpreter /usr/bin/python3.12
+  is_interpreter /usr/bin/osascript
+  not is_interpreter /usr/bin/true
+  not is_interpreter "/Applications/X.app/Contents/MacOS/X"
+}

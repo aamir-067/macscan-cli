@@ -7,6 +7,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 ### Added
 - More published stealer indicators. Home-folder files `~/.mainhelper` (AMOS backdoor) and `~/.pwd`, `~/.botid`, `~/.uninstalled`, `~/.chost` (Odyssey) join the critical `File name used by known Mac stealers present:` list. `/tmp/out.zip`, `/tmp/socks` and `/tmp/update` are high (`Temp file name used by known Mac stealers (verify):`). The AMOS launch label `com.finder.helper` is critical (`Launch item name used by known Mac stealers:`). A launch item with a Google, Apple or Microsoft label that runs an interpreter or a script, like SHub Reaper's fake `com.google.keystone.agent`, is high (`Launch item uses a vendor name but runs a script:`).
 
+### Fixed
+- Module 05 recognized interpreters only by a short list of program names, so a launch item that starts a script through `/usr/bin/env` (or `dash`, `ksh`, `php`, `swift` and similar) was not reported as running an interpreter. A shared `is_interpreter` check now covers them.
+
 ## [2.5.2] - 2026-10-06
 
 ### Added
