@@ -179,6 +179,19 @@ git_cfg(){
 # 2026-02) plants pre-commit and pre-push hooks; hooks run on every commit or push.
 HOOK_BAD='(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(ba|z|da)?sh|base64[[:space:]]+(-d|-D|--decode)|osascript|/tmp/\.|(node|python3?|bun|deno|sh|bash|zsh)[[:space:]]+"?(\$HOME|~|/Users/[^/]+)/\.'
 hook_runs_hidden_code(){ rd "$1" 2>/dev/null | grep -qE "$HOOK_BAD"; }
+# File names Mac stealers leave behind. AMOS with its backdoor (Moonlock 2025-07, Trend Micro
+# 2025-09): ~/.helper, ~/.agent, ~/.mainhelper, ~/.pass, ~/.username, /tmp/update, /tmp/out.zip.
+# Odyssey (Jamf Threat Labs, 2025): ~/.pwd, ~/.botid, ~/.uninstalled, ~/.username, ~/.chost,
+# /tmp/out.zip (stolen data before upload), /tmp/socks (SOCKS5 proxy).
+STEALER_HOME_NAMES='.helper .agent .mainhelper .pass .username .pwd .botid .uninstalled .chost'
+STEALER_TMP_NAMES='out.zip socks update'
+# stealer_files <home> <temp folder>: "home<TAB>path" or "temp<TAB>path" for each name present.
+stealer_files(){
+  local n
+  for n in $STEALER_HOME_NAMES; do { [ -e "$1/$n" ] || [ -L "$1/$n" ]; } && printf 'home\t%s\n' "$1/$n"; done
+  for n in $STEALER_TMP_NAMES; do { [ -e "$2/$n" ] || [ -L "$2/$n" ]; } && printf 'temp\t%s\n' "$2/$n"; done
+  return 0
+}
 mcp_files(){
   {
     [ -f "$UH/.claude.json" ] && echo "$UH/.claude.json"

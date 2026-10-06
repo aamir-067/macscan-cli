@@ -3,7 +3,9 @@
 # shellcheck source=../core/common.sh
 source "$(dirname "$0")/../core/common.sh"
 section "launchd items: what they run and who signed it"
-for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAgents /var/root/Library/LaunchAgents /Library/StartupItems; do
+# A home folder outside /Users (rare, and the test fixtures) is covered too.
+case "$UH" in /Users/*) HLA="";; *) HLA="$UH/Library/LaunchAgents";; esac
+for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAgents /var/root/Library/LaunchAgents /Library/StartupItems ${HLA:+"$HLA"}; do
   [ -d "$d" ] || continue
   sub "$d"; ls -laT "$d"
   for f in "$d"/* "$d"/.*; do
@@ -15,7 +17,10 @@ for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAge
     case "$bn" in .*) flag "Hidden launch item file: $f";; esac
     prog=$(plutil -extract Program raw -o - "$f" 2>/dev/null)
     args=$(plutil -extract ProgramArguments json -o - "$f" 2>/dev/null)
-    echo "  Label: $(plutil -extract Label raw -o - "$f" 2>/dev/null)"
+    label=$(plutil -extract Label raw -o - "$f" 2>/dev/null)
+    echo "  Label: $label"
+    # AMOS backdoor (Moonlock 2025-07, Trend Micro 2025-09) runs ~/.agent from this daemon.
+    case "$label|$bn" in com.finder.helper\|*|*\|com.finder.helper.plist) flag "Launch item name used by known Mac stealers: $f";; esac
     echo "  Program: ${prog:-none}"; echo "  Args: ${args:-none}"
     plutil -p "$f" 2>/dev/null | grep -iE "RunAtLoad|KeepAlive|StartInterval|StartCalendarInterval|WatchPaths|QueueDirectories|DYLD|EnvironmentVariables" | sed 's/^/  /'
     plutil -p "$f" 2>/dev/null | grep -q "DYLD_" && flag "DYLD variable in launch item: $f"
@@ -26,6 +31,15 @@ for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAge
       if [ -e "$tgt" ]; then printf "  target: "; sigf "$tgt"; else echo "  target missing: $tgt"; fi
       case "$(canon_path "$tgt")" in */tmp/*|/Users/Shared/*|/private/var/folders/*|/var/folders/*|"$UH"/.*) flag "Launch item runs from an unusual location: $f -> $tgt";; esac
       case "$tgt" in */osascript|*/bash|*/sh|*/zsh|*/python*|*/node|*/perl|*/curl|*/ruby|*/deno|*/bun) flag "Launch item runs an interpreter directly: $f -> $args";; esac
+      # SHub Reaper (SentinelOne, 2026) registers com.google.keystone.agent for a bash script in
+      # ~/Library/Application Support/Google/GoogleUpdate.app. Real Google, Apple and Microsoft
+      # agents run signed programs, never an interpreter or a script.
+      case "$label" in com.google.*|com.apple.*|com.microsoft.*)
+        case "$tgt" in
+          */osascript|*/bash|*/sh|*/zsh|*/python*|*/node|*/perl|*/ruby) flag "Launch item uses a vendor name but runs a script: $f -> $tgt";;
+          *) [ -f "$tgt" ] && ! file -b "$tgt" 2>/dev/null | grep -q "Mach-O" && flag "Launch item uses a vendor name but runs a script: $f -> $tgt";;
+        esac;;
+      esac
     fi
     [ -n "$(find "$f" -Btime -"$DAYS" 2>/dev/null)" ] && flag "Launch item created in the last $DAYS days: $f"
   done

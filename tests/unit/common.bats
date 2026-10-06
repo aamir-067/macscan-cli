@@ -156,3 +156,16 @@ teardown(){ drop_env; }
   [ "$(git_cfg "$TEST_TMP/gc" user name)" = "a=b" ]
   [ -z "$(git_cfg "$TEST_TMP/gc" core pager)" ]
 }
+
+@test "stealer_files finds published AMOS and Odyssey file names in home and temp" {
+  mkdir -p "$TEST_TMP/t"
+  touch "$UH/.botid" "$UH/.mainhelper" "$UH/.zshrc" "$TEST_TMP/t/out.zip" "$TEST_TMP/t/other.zip"
+  ln -s /nonexistent "$UH/.chost"
+  run stealer_files "$UH" "$TEST_TMP/t"
+  [[ "$output" == *"home	$UH/.botid"* ]] || return 1
+  [[ "$output" == *"home	$UH/.mainhelper"* ]] || return 1
+  [[ "$output" == *"home	$UH/.chost"* ]] || return 1
+  [[ "$output" == *"temp	$TEST_TMP/t/out.zip"* ]] || return 1
+  [[ "$output" != *".zshrc"* && "$output" != *"other.zip"* ]] || return 1
+  [ "$status" -eq 0 ]
+}

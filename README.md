@@ -30,7 +30,7 @@
 | 02 | Accounts | UID 0 accounts, unexpected admins, new user records, sudoers and `NOPASSWD`, auto-login |
 | 03 | Remote access | SSH server, Screen Sharing, ARD, `authorized_keys`, AnyDesk, TeamViewer, ngrok, cloudflared and similar |
 | 04 | Profiles and MDM | Configuration profiles and managed preferences |
-| 05 | launchd and BTM | Every LaunchAgent and LaunchDaemon with its target's signature, hidden items, interpreters, temp locations, `DYLD_*`, Background Task Management records |
+| 05 | launchd and BTM | Every LaunchAgent and LaunchDaemon with its target's signature, hidden items, interpreters, temp locations, `DYLD_*`, launch names used by known stealers, Google, Apple or Microsoft names on items that run a script, Background Task Management records |
 | 06 | Other persistence | cron, at, periodic, login hooks, kernel and system extensions, authorization plugins, PAM, Spotlight and QuickLook plugins |
 | 07 | Shell | Shell startup files that download and run code, aliases or functions that override `sudo`, `ssh`, `git`; shadowed system commands; suspicious history |
 | 08 | Processes | Process tree, signatures of all non-Apple executables, programs running from temp or hidden folders, unexpected readers of browser and keychain files, `DYLD_INSERT_LIBRARIES` |
@@ -39,7 +39,7 @@
 | 11 | Keychain and certificates | Custom trust settings, certificates in the System keychain |
 | 12 | Applications | Signature and notarization of every app, apps outside `/Applications`, installer packages, Homebrew taps |
 | 13 | Downloads | Quarantine history, file origins (`kMDItemWhereFroms`), downloads from social and file-sharing links |
-| 14 | File system | New Mach-O binaries, scripts and plists outside app and dev folders, SUID files, staging archives, stealer artifacts |
+| 14 | File system | New Mach-O binaries, scripts and plists outside app and dev folders, SUID files, staging archives, file names left by known stealers (AMOS, Odyssey) in the home folder and `/tmp` |
 | 15 | Browsers | Extensions of every Chromium and Firefox-family browser (found automatically) with risky permissions, sideloaded extensions, native messaging hosts, policies, saved-credential counts (never contents) |
 | 16 | Developer environment and AI tools | Editor extensions, MCP server commands (flagged when they run from a temp or unknown hidden folder), AI tool hooks, Claude Code plugins, registry hijacks, global packages, git and SSH configs that run commands, hooks a global git template or `core.hooksPath` adds to every repository, credential files (paths only) |
 | 17 | Code repositories | Known injected-loader markers, obfuscation, install scripts, VS Code tasks that run on folder open, fake font files, git hooks (flagged when they download or run hidden code), repo configs that run commands |

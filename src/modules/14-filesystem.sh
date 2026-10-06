@@ -7,7 +7,10 @@ PL=( \( -path "$UH/Library/CloudStorage" -o -path "$UH/Library/Caches" -o -path 
 
 section "Hidden files and folders in home"
 ls -laT "$UH" | grep -E ' \.[^. ]'
-for n in .helper .agent .pass .username; do [ -e "$UH/$n" ] && flag "File name used by known Mac stealers present: $UH/$n"; done
+stealer_files "$UH" /private/tmp | while IFS=$'\t' read -r k p; do
+  if [ "$k" = home ]; then flag "File name used by known Mac stealers present: $p"
+  else flag "Temp file name used by known Mac stealers (verify): $p"; fi
+done
 
 section "Recently created items in key Library folders"
 for d in "$AS" "/Library/Application Support" "$UH/Library/Containers" "$UH/Library/Group Containers" "$UH/Library" /Library /Users/Shared /private/var/root; do

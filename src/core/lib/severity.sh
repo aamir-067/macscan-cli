@@ -9,6 +9,7 @@
 
 SEVERITY_RULES='critical	Injected malware marker found:
 critical	File name used by known Mac stealers present:
+critical	Launch item name used by known Mac stealers:
 critical	Extra account with UID 0:
 critical	Authorization plugin installed
 critical	Launch item runs from an unusual location:
@@ -48,6 +49,8 @@ high	DYLD variable in launch item:
 high	launchd has
 high	Process started with DYLD_INSERT_LIBRARIES:
 high	Hidden launch item file:
+high	Launch item uses a vendor name but runs a script:
+high	Temp file name used by known Mac stealers
 high	Process running from a temp or shared folder:
 high	Process running from a hidden folder in home:
 high	Task auto-runs on folder open:

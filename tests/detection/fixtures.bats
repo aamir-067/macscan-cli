@@ -214,3 +214,24 @@ JSON
   mod 17
   not grep -q "Repo git config can execute commands" "$RUN/.flags.raw"
 }
+
+launch_agent(){ # <file> <label> <program>
+  mkdir -p "$UH/Library/LaunchAgents"
+  /usr/bin/plutil -create xml1 "$1"
+  /usr/bin/plutil -insert Label -string "$2" "$1"
+  /usr/bin/plutil -insert ProgramArguments -array "$1"
+  /usr/bin/plutil -insert ProgramArguments.0 -string "$3" "$1"
+}
+
+@test "05 flags the AMOS launch label and a vendor-named agent that runs a script" {
+  la="$UH/Library/LaunchAgents"
+  gu="$UH/Library/Application Support/Google/GoogleUpdate.app/Contents/MacOS"
+  mkdir -p "$gu"; printf '#!/bin/bash\nexit 0\n' > "$gu/GoogleUpdate"; chmod +x "$gu/GoogleUpdate"
+  launch_agent "$la/com.finder.helper.plist" com.finder.helper "$UH/.agent"
+  launch_agent "$la/com.google.keystone.agent.plist" com.google.keystone.agent "$gu/GoogleUpdate"
+  launch_agent "$la/com.google.real.plist" com.google.real /bin/ls
+  mod 05
+  grep -qxF "[05] Launch item name used by known Mac stealers: $la/com.finder.helper.plist" "$RUN/.flags.raw"
+  grep -qxF "[05] Launch item uses a vendor name but runs a script: $la/com.google.keystone.agent.plist -> $gu/GoogleUpdate" "$RUN/.flags.raw"
+  not grep -q "com.google.real.plist ->" "$RUN/.flags.raw"
+}
