@@ -183,6 +183,27 @@ yara_rules(){
   not grep -q "$UH/ok/" "$RUN/.flags.raw"
 }
 
+@test "16 flags MCP servers that run code from a hidden home folder or a temp folder, not normal ones" {
+  mkdir -p "$UH/.cursor" "$UH/.node-cache"
+  cat > "$UH/.cursor/mcp.json" <<JSON
+{"mcpServers":{
+  "eslint-analyzer":{"command":"node","args":["~/.node-cache/index.js"]},
+  "dropper":{"command":"/bin/sh","args":["-c","/private/tmp/.x.sh"]},
+  "env-home":{"command":"node","args":["\${HOME}/.dev-utils/server.js"]},
+  "fs":{"command":"npx","args":["-y","@modelcontextprotocol/server-filesystem","$UH/code"]},
+  "nvm":{"command":"$UH/.nvm/versions/node/v22.0.0/bin/node","args":["$UH/code/srv/index.js"]},
+  "remote":{"url":"https://mcp.example.invalid/sse"}
+}}
+JSON
+  printf '{"projects":{"/private/tmp/demo":{"mcpServers":{"ok":{"command":"npx","args":["-y","x"]}}}}}\n' > "$UH/.claude.json"
+  mod 16
+  grep -qxF "[16] MCP server runs code from a hidden folder (verify): $UH/.cursor/mcp.json | eslint-analyzer: node ~/.node-cache/index.js" "$RUN/.flags.raw"
+  grep -qxF "[16] MCP server runs code from a temp folder: $UH/.cursor/mcp.json | dropper: /bin/sh -c /private/tmp/.x.sh" "$RUN/.flags.raw"
+  grep -qF "MCP server runs code from a hidden folder (verify): $UH/.cursor/mcp.json | env-home:" "$RUN/.flags.raw"
+  not grep -qE "\| (fs|nvm|remote):|demo" "$RUN/.flags.raw"
+  grep -qxF "$UH/.cursor/mcp.json | fs: npx -y @modelcontextprotocol/server-filesystem $UH/code" "$INV/mcp.txt"
+}
+
 @test "16 and 17 ignore commented-out SSH and git settings" {
   mkdir -p "$UH/.ssh" "$UH/proj/.git"
   printf '#   ProxyCommand ssh -q -W %%h:%%p gw.example.invalid\nHost *\n  PermitLocalCommand no\n' > "$UH/.ssh/config"

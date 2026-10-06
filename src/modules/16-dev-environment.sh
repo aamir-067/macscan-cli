@@ -18,6 +18,22 @@ find "$UH/.local/share" "$UH/.oh-my-zsh/custom" "$UH/.config" -maxdepth 5 -path 
 done
 
 section "MCP and AI tool server commands (found automatically)"
+# mcp_where <path>: "temp" or "hidden" when an MCP server's program or script lives in a temp
+# folder or in a hidden folder in home that no known tool installs into. SANDWORM_MODE's
+# McpInject (npm worm, Socket and SafeDep, 2026-02) writes its server to a random hidden
+# folder such as ~/.node-cache and registers it in Claude, Cursor, Continue and Windsurf.
+mcp_where(){
+  local p; p=$(canon_path "$1")
+  case "$p" in
+    "$UH"/.*/*) ;;
+    "$UH"/*) return;;
+    /tmp/*|/private/tmp/*|/var/tmp/*|/private/var/tmp/*|/var/folders/*|/private/var/folders/*|/Users/Shared/*) echo temp; return;;
+    *) return;;
+  esac
+  is_dev_path "$p" && return
+  case "$p" in "$UH"/.claude/plugins/*|"$UH"/.*/extensions/*|"$UH"/.volta/*|"$UH"/.pyenv/*|"$UH"/.asdf/*|"$UH"/.deno/*|"$UH"/.fnm/*|"$UH"/.nodenv/*|"$UH"/.pnpm/*|"$UH"/.docker/*|"$UH"/.pixi/*|"$UH"/.sdkman/*|"$UH"/.rbenv/*|"$UH"/.juliaup/*) return;; esac
+  echo hidden
+}
 mcp_files | while IFS= read -r f; do
   echo "[$f]"
   perl -MJSON::PP -e '
@@ -25,10 +41,20 @@ mcp_files | while IFS= read -r f; do
     sub cmd { my $s=shift; my @c; for my $k (qw(command args url)) { my $v=$s->{$k}; next unless defined $v; push @c, (ref $v eq "ARRAY") ? (grep {!ref} @$v) : (ref $v ? () : $v) } join(" ",@c) }
     sub walk { my ($n,$p)=@_;
       if(ref $n eq "HASH"){
-        for my $key (qw(mcpServers mcp)) { my $m=$n->{$key}; next unless ref $m eq "HASH"; for my $k (sort keys %$m){ my $s=$m->{$k}; next unless ref $s eq "HASH"; print "$p$k: ".cmd($s)."\n" } }
+        for my $key (qw(mcpServers mcp)) { my $m=$n->{$key}; next unless ref $m eq "HASH"; for my $k (sort keys %$m){ my $s=$m->{$k}; next unless ref $s eq "HASH"; my $c=cmd($s); $c=~s/[\t\n]/ /g; print "$p$k: $c\t$c\n" } }
         for (keys %$n){ walk($n->{$_}, "$p$_/") if ref $n->{$_} } }
       elsif(ref $n eq "ARRAY"){ walk($_,$p) for @$n } }
-    walk($j,"");' < "$f" | while IFS= read -r l; do echo "  $l"; inv mcp "$f | $l"; done
+    walk($j,"");' < "$f" | while IFS=$'\t' read -r l c; do
+      echo "  $l"; inv mcp "$f | $l"
+      # Paths in the command and its arguments only (never the JSON key path, which in
+      # ~/.claude.json is a project folder). $HOME, ${HOME} and ~/ count as the home folder.
+      c=${c//\$\{HOME\}/$UH}; c=${c//\$HOME/$UH}; c=${c//\~\//$UH/}
+      w=$(printf '%s\n' "$c" | grep -oE "/[^[:space:]\"',;]+" | while IFS= read -r t; do mcp_where "$t"; done | sort -u | tail -1)
+      case "$w" in
+        temp) flag "MCP server runs code from a temp folder: $f | $l";;
+        hidden) flag "MCP server runs code from a hidden folder (verify): $f | $l";;
+      esac
+    done
 done
 
 section "AI tool hooks (commands that run automatically)"

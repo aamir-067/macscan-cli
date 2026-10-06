@@ -41,7 +41,7 @@
 | 13 | Downloads | Quarantine history, file origins (`kMDItemWhereFroms`), downloads from social and file-sharing links |
 | 14 | File system | New Mach-O binaries, scripts and plists outside app and dev folders, SUID files, staging archives, stealer artifacts |
 | 15 | Browsers | Extensions of every Chromium and Firefox-family browser (found automatically) with risky permissions, sideloaded extensions, native messaging hosts, policies, saved-credential counts (never contents) |
-| 16 | Developer environment and AI tools | Editor extensions, MCP server commands, AI tool hooks, Claude Code plugins, registry hijacks, global packages, git and SSH configs that run commands, hooks a global git template or `core.hooksPath` adds to every repository, credential files (paths only) |
+| 16 | Developer environment and AI tools | Editor extensions, MCP server commands (flagged when they run from a temp or unknown hidden folder), AI tool hooks, Claude Code plugins, registry hijacks, global packages, git and SSH configs that run commands, hooks a global git template or `core.hooksPath` adds to every repository, credential files (paths only) |
 | 17 | Code repositories | Known injected-loader markers, obfuscation, install scripts, VS Code tasks that run on folder open, fake font files, git hooks (flagged when they download or run hidden code), repo configs that run commands |
 | 18 | Logs | XProtect results, Gatekeeper overrides, TCC changes, `osascript`, sudo, curl, crash reports |
 | 19 | YARA | Custom rules plus YARA Forge core and Elastic macOS rules, run as you |

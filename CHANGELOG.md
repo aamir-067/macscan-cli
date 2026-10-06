@@ -4,6 +4,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- MCP servers that run code from a temp folder (`MCP server runs code from a temp folder:`) or from a hidden folder in the home folder that no known tool installs into (`MCP server runs code from a hidden folder (verify):`) are high. The SANDWORM_MODE npm worm (2026) writes a rogue MCP server to a random hidden folder such as `~/.node-cache` and registers it in Claude, Cursor, Continue and Windsurf so the assistant collects keys and tokens. Only the server's command and arguments are checked; `$HOME`, `${HOME}` and `~/` count as the home folder, and version managers, editor extension folders and Claude Code plugins are not flagged.
+
 ### Fixed
 - Module 16 flagged commented-out lines in SSH and git configs. The stock `/etc/ssh/ssh_config` documents `ProxyCommand` and `PermitLocalCommand` in comments, so every Mac got two `SSH config can run commands (verify):` flags. Comments (`#`, and `;` in git configs) and an explicit `PermitLocalCommand no` are skipped now; module 17 skips comments in repository git configs too.
 

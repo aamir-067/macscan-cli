@@ -54,6 +54,8 @@ high	Task auto-runs on folder open:
 high	Project turns on automatic tasks without asking:
 high	Config file with an abnormally long line:
 high	Git hook downloads or runs hidden code:
+high	MCP server runs code from a temp folder:
+high	MCP server runs code from a hidden folder
 high	Git template adds a hook to every new repository
 high	Global git hook runs in every repository
 high	SUID/SGID file outside system paths:
