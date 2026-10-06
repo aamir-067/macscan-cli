@@ -4,6 +4,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- Module 16 flagged commented-out lines in SSH and git configs. The stock `/etc/ssh/ssh_config` documents `ProxyCommand` and `PermitLocalCommand` in comments, so every Mac got two `SSH config can run commands (verify):` flags. Comments (`#`, and `;` in git configs) and an explicit `PermitLocalCommand no` are skipped now; module 17 skips comments in repository git configs too.
+
 ## [2.5.1] - 2026-10-06
 
 ### Added

@@ -59,7 +59,7 @@ section "Git configuration"
 for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig /opt/homebrew/etc/gitconfig; do [ -f "$f" ] && { echo "[$f]"; rd "$f"; inv gitcfg "$f $(sha "$f")"; }; done
 # Only the exact "helper = osxkeychain" line is the macOS default; a helper line that merely
 # mentions osxkeychain (for example a shell function that also runs curl) is still reported.
-for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig; do [ -f "$f" ] && rd "$f" | grep -iE "hooksPath|templateDir|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" | grep -viE '^[[:space:]]*helper[[:space:]]*=[[:space:]]*osxkeychain[[:space:]]*$' | sed "s|^|$f:|"; done | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
+for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig; do [ -f "$f" ] && rd "$f" | grep -vE '^[[:space:]]*[#;]' | grep -iE "hooksPath|templateDir|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" | grep -viE '^[[:space:]]*helper[[:space:]]*=[[:space:]]*osxkeychain[[:space:]]*$' | sed "s|^|$f:|"; done | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
 sub "Hooks git adds to every new repository or runs in every repository"
 # SANDWORM_MODE (npm worm, 2026-02) sets a global init.templateDir so every new clone gets
 # its pre-commit and pre-push hooks; a global core.hooksPath reaches existing repositories.
@@ -86,7 +86,9 @@ done
 section "SSH client"
 ls -laT "$UH/.ssh"; [ -f "$UH/.ssh/config" ] && rd "$UH/.ssh/config"; [ -f "$UH/.ssh/config" ] && inv sshcfg "$UH/.ssh/config $(sha "$UH/.ssh/config")"
 grep -vE '^[[:space:]]*(#|$)' /etc/ssh/ssh_config 2>/dev/null; ls -la /etc/ssh/ssh_config.d 2>/dev/null
-for f in "$UH/.ssh/config" /etc/ssh/ssh_config /etc/ssh/ssh_config.d/*; do [ -f "$f" ] && rd "$f" | grep -iE "ProxyCommand|LocalCommand|PermitLocalCommand|KnownHostsCommand" | sed "s|^|$f:|"; done | while read -r l; do flag "SSH config can run commands (verify): $l"; done
+# Comments and "PermitLocalCommand no" are skipped: the stock /etc/ssh/ssh_config documents
+# ProxyCommand and PermitLocalCommand in comments, which used to raise two flags on every Mac.
+for f in "$UH/.ssh/config" /etc/ssh/ssh_config /etc/ssh/ssh_config.d/*; do [ -f "$f" ] && rd "$f" | grep -vE '^[[:space:]]*#' | grep -viE '^[[:space:]]*PermitLocalCommand[[:space:]=]+no[[:space:]]*$' | grep -iE "ProxyCommand|LocalCommand|PermitLocalCommand|KnownHostsCommand" | sed "s|^|$f:|"; done | while read -r l; do flag "SSH config can run commands (verify): $l"; done
 ls "$UH/.ssh" 2>/dev/null | grep -vE "\.pub$|^config$|^known_hosts|^authorized_keys$" | while read -r k; do flag "File in ~/.ssh may be a private key: $k"; done
 
 section "Credential files on disk (paths only)"

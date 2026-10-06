@@ -56,5 +56,5 @@ done; }
 
 section "Repository git configs that can execute commands"
 find "$UH" "${PRUNE_KEEPGIT[@]}" -type f -path "*/.git/config" -print 2>/dev/null | while IFS= read -r c; do
-  rd "$c" | grep -iE "fsmonitor|hooksPath|sshCommand|pager|textconv|external|askpass" | sed "s|^|$c:|" | while read -r l; do echo "$l"; flag "Repo git config can execute commands: $l"; done
+  rd "$c" | grep -vE '^[[:space:]]*[#;]' | grep -iE "fsmonitor|hooksPath|sshCommand|pager|textconv|external|askpass" | sed "s|^|$c:|" | while read -r l; do echo "$l"; flag "Repo git config can execute commands: $l"; done
 done

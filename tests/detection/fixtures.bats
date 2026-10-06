@@ -182,3 +182,14 @@ yara_rules(){
   grep -qxF "[17] Git hook downloads or runs hidden code: $UH/proj/.git/hooks/pre-commit" "$RUN/.flags.raw"
   not grep -q "$UH/ok/" "$RUN/.flags.raw"
 }
+
+@test "16 and 17 ignore commented-out SSH and git settings" {
+  mkdir -p "$UH/.ssh" "$UH/proj/.git"
+  printf '#   ProxyCommand ssh -q -W %%h:%%p gw.example.invalid\nHost *\n  PermitLocalCommand no\n' > "$UH/.ssh/config"
+  printf '[core]\n# pager = less\n\t; fsmonitor = x\n' > "$UH/.gitconfig"
+  printf '[core]\n\t# fsmonitor = ./x.sh\n' > "$UH/proj/.git/config"
+  mod 16
+  not grep -q "$UH/.ssh/config:\|$UH/.gitconfig:" "$RUN/.flags.raw"
+  mod 17
+  not grep -q "Repo git config can execute commands" "$RUN/.flags.raw"
+}
