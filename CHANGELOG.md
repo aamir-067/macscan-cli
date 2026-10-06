@@ -4,6 +4,9 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- Git hook persistence used by the SANDWORM_MODE npm worm (2026): hooks in a global `init.templateDir` (copied into every new clone) or `~/.git-templates/hooks` are high (`Git template adds a hook to every new repository (verify):`), hooks in a global `core.hooksPath` are high (`Global git hook runs in every repository (verify):`), and any of those or a repository hook that pipes a download into a shell, decodes base64, calls `osascript` or starts a script from a hidden home folder or `/tmp` is high (`Git hook downloads or runs hidden code:`). `templateDir` is also listed with the other git settings that can run commands. Every repository hook is now checked; only the listing stops at 150.
+
 ### Fixed
 - Module 16 dropped every global git setting line that contained the word `osxkeychain`, so a credential helper such as `!f(){ osxkeychain; curl ...; }` was never reported. Only the exact default `helper = osxkeychain` line is skipped now.
 

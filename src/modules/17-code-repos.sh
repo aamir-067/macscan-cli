@@ -46,9 +46,13 @@ find "$UH" "${PRUNE[@]}" -type f \( -name "*.woff" -o -name "*.woff2" \) -size -
 done
 
 section "Active git hooks in repositories"
+# Every hook is checked; only the first 150 are listed.
 find "$UH" "${PRUNE_KEEPGIT[@]}" -type d -path "*/.git/hooks" -print 2>/dev/null | while IFS= read -r h; do
   for f in "$h"/*; do [ -f "$f" ] || continue; case "$f" in *.sample) continue;; esac; echo "$f"; done
-done | head -150
+done | { n=0; while IFS= read -r f; do
+  n=$((n + 1)); [ "$n" -le 150 ] && echo "$f"
+  hook_runs_hidden_code "$f" && flag "Git hook downloads or runs hidden code: $f"
+done; }
 
 section "Repository git configs that can execute commands"
 find "$UH" "${PRUNE_KEEPGIT[@]}" -type f -path "*/.git/config" -print 2>/dev/null | while IFS= read -r c; do

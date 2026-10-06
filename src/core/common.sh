@@ -162,6 +162,23 @@ PRUNE_KEEPGIT=( \( "${PB[@]}" \) -prune -o )
 chromium_ext_dirs(){ find "$AS" -maxdepth 5 -type d -name Extensions -not -path "*/Extensions/*" 2>/dev/null | while IFS= read -r d; do ls "$d"/*/*/manifest.json >/dev/null 2>&1 && echo "$d"; done; }
 firefox_ext_files(){ find "$AS" -maxdepth 5 -name extensions.json -path "*Profiles*" 2>/dev/null | sort -u; }
 editor_ext_dirs(){ for d in "$UH"/.*/extensions "$UH"/.*/*/extensions "$AS/Zed/extensions/installed"; do [ -d "$d" ] && echo "$d"; done; }
+# git_cfg <file> <section> <key>: every value of section.key in a git config file (names
+# are case-insensitive), with a leading ~/ expanded. Parsed as text, git itself never runs.
+git_cfg(){
+  local v
+  rd "$1" 2>/dev/null | awk -v s="$2" -v k="$3" '
+    /^[[:space:]]*\[/ { h=$0; sub(/^[[:space:]]*\[[[:space:]]*/, "", h); sub(/[]" \t].*$/, "", h); sec=tolower(h); next }
+    sec == tolower(s) && /=/ {
+      key=$0; sub(/=.*$/, "", key); gsub(/[[:space:]]/, "", key)
+      if (tolower(key) != tolower(k)) next
+      v=$0; sub(/^[^=]*=[[:space:]]*/, "", v); sub(/[[:space:]]+$/, "", v); gsub(/^"|"$/, "", v); print v
+    }' | while IFS= read -r v; do case "$v" in \~/*) v="$UH/${v#\~/}";; esac; printf '%s\n' "$v"; done
+}
+# Git hooks that pipe a download into a shell, decode a payload, call osascript, or start a
+# script from a hidden home folder or /tmp. SANDWORM_MODE (npm worm, Socket and SafeDep,
+# 2026-02) plants pre-commit and pre-push hooks; hooks run on every commit or push.
+HOOK_BAD='(curl|wget)[^|]*\|[[:space:]]*(sudo[[:space:]]+)?(ba|z|da)?sh|base64[[:space:]]+(-d|-D|--decode)|osascript|/tmp/\.|(node|python3?|bun|deno|sh|bash|zsh)[[:space:]]+"?(\$HOME|~|/Users/[^/]+)/\.'
+hook_runs_hidden_code(){ rd "$1" 2>/dev/null | grep -qE "$HOOK_BAD"; }
 mcp_files(){
   {
     [ -f "$UH/.claude.json" ] && echo "$UH/.claude.json"

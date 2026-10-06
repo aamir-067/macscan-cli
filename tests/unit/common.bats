@@ -147,3 +147,12 @@ teardown(){ drop_env; }
   not trusted_program /private/tmp/nonexistent
   not trusted_program ""
 }
+
+@test "git_cfg reads values case-insensitively and expands ~/" {
+  load_common
+  printf '[Init]\n  TemplateDir = ~/.t\n[core]\n\thooksPath="/x y"\n[user]\n\tname = a=b\n' > "$TEST_TMP/gc"
+  [ "$(git_cfg "$TEST_TMP/gc" init templatedir)" = "$UH/.t" ]
+  [ "$(git_cfg "$TEST_TMP/gc" core hookspath)" = "/x y" ]
+  [ "$(git_cfg "$TEST_TMP/gc" user name)" = "a=b" ]
+  [ -z "$(git_cfg "$TEST_TMP/gc" core pager)" ]
+}

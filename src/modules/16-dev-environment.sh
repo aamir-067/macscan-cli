@@ -59,7 +59,29 @@ section "Git configuration"
 for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig /opt/homebrew/etc/gitconfig; do [ -f "$f" ] && { echo "[$f]"; rd "$f"; inv gitcfg "$f $(sha "$f")"; }; done
 # Only the exact "helper = osxkeychain" line is the macOS default; a helper line that merely
 # mentions osxkeychain (for example a shell function that also runs curl) is still reported.
-for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig; do [ -f "$f" ] && rd "$f" | grep -iE "hooksPath|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" | grep -viE '^[[:space:]]*helper[[:space:]]*=[[:space:]]*osxkeychain[[:space:]]*$' | sed "s|^|$f:|"; done | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
+for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig; do [ -f "$f" ] && rd "$f" | grep -iE "hooksPath|templateDir|sshCommand|fsmonitor|pager|askpass|textconv|external|helper" | grep -viE '^[[:space:]]*helper[[:space:]]*=[[:space:]]*osxkeychain[[:space:]]*$' | sed "s|^|$f:|"; done | while read -r l; do flag "Git setting that can run commands (verify): $l"; done
+sub "Hooks git adds to every new repository or runs in every repository"
+# SANDWORM_MODE (npm worm, 2026-02) sets a global init.templateDir so every new clone gets
+# its pre-commit and pre-push hooks; a global core.hooksPath reaches existing repositories.
+{
+  for f in "$UH/.gitconfig" "$UH/.config/git/config" /etc/gitconfig /opt/homebrew/etc/gitconfig; do
+    [ -f "$f" ] || continue
+    git_cfg "$f" init templatedir | while IFS= read -r d; do printf 'template\t%s\n' "$d/hooks"; done
+    git_cfg "$f" core hookspath | while IFS= read -r d; do printf 'global\t%s\n' "$d"; done
+  done
+  printf 'template\t%s\n' "$UH/.git-templates/hooks"
+} | sort -u | while IFS=$'\t' read -r kind d; do
+  case "$d" in /*) ;; *) continue;; esac
+  [ -d "$d" ] || continue
+  for h in "$d"/*; do
+    [ -f "$h" ] || continue
+    case "$h" in *.sample) continue;; esac
+    echo "$kind: $h"
+    if hook_runs_hidden_code "$h"; then flag "Git hook downloads or runs hidden code: $h"
+    elif [ "$kind" = template ]; then flag "Git template adds a hook to every new repository (verify): $h"
+    else flag "Global git hook runs in every repository (verify): $h"; fi
+  done
+done
 
 section "SSH client"
 ls -laT "$UH/.ssh"; [ -f "$UH/.ssh/config" ] && rd "$UH/.ssh/config"; [ -f "$UH/.ssh/config" ] && inv sshcfg "$UH/.ssh/config $(sha "$UH/.ssh/config")"

@@ -53,6 +53,9 @@ high	Process running from a hidden folder in home:
 high	Task auto-runs on folder open:
 high	Project turns on automatic tasks without asking:
 high	Config file with an abnormally long line:
+high	Git hook downloads or runs hidden code:
+high	Git template adds a hook to every new repository
+high	Global git hook runs in every repository
 high	SUID/SGID file outside system paths:
 high	crontab exists for
 high	/etc/crontab has entries
