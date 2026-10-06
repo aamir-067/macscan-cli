@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-10-06
+
 ### Added
 - Git hook persistence used by the SANDWORM_MODE npm worm (2026): hooks in a global `init.templateDir` (copied into every new clone) or `~/.git-templates/hooks` are high (`Git template adds a hook to every new repository (verify):`), hooks in a global `core.hooksPath` are high (`Global git hook runs in every repository (verify):`), and any of those or a repository hook that pipes a download into a shell, decodes base64, calls `osascript` or starts a script from a hidden home folder or `/tmp` is high (`Git hook downloads or runs hidden code:`). `templateDir` is also listed with the other git settings that can run commands. Every repository hook is now checked; only the listing stops at 150.
 
@@ -102,7 +104,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/aamir-067/macscan-cli/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/aamir-067/macscan-cli/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/aamir-067/macscan-cli/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/aamir-067/macscan-cli/compare/v2.3.0...v2.4.0
