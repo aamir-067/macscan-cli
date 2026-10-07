@@ -60,5 +60,8 @@ for v in DYLD_INSERT_LIBRARIES DYLD_LIBRARY_PATH DYLD_FRAMEWORK_PATH; do
 done
 
 section "Background Task Management database (all login and background items)"
-sfltool dumpbtm 2>/dev/null | grep -E "^ #|Name:|Developer Name:|Team Identifier:|Type:|Disposition:|Identifier:|URL:|Executable Path:|Last Use:|Parent Identifier:"
-sfltool dumpbtm 2>/dev/null | awk '$1=="Identifier:" {print $2}' | sort -u | grep -v "com.mactriage" | while read -r id; do inv btm "$id"; done
+# Read once, with a time limit: sfltool can wait indefinitely for an authorization it never gets
+# (seen on a CI runner without root), which would stall the whole scan.
+BTM=$(tmpf); tmo 120 sfltool dumpbtm > "$BTM" 2>/dev/null
+grep -E "^ #|Name:|Developer Name:|Team Identifier:|Type:|Disposition:|Identifier:|URL:|Executable Path:|Last Use:|Parent Identifier:" "$BTM"
+awk '$1=="Identifier:" {print $2}' "$BTM" | sort -u | grep -v "com.mactriage" | while read -r id; do inv btm "$id"; done

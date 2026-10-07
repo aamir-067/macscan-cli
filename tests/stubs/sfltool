@@ -1,0 +1,3 @@
+#!/bin/bash
+# Test stub: sfltool needs root or an authorization prompt; print nothing.
+exit 0

@@ -4,6 +4,11 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+2.5.3 was tagged but never published: its release tests hung on GitHub's runner (see below). This version contains all of 2.5.3.
+
+### Fixed
+- Module 05 ran `sfltool dumpbtm` twice with no time limit. Without root and without an answer to its authorization request it can wait forever, which would stall the whole scan. It now runs once, limited to 120 seconds. The detection tests stub it and stop any module after 5 minutes.
+
 ## [2.5.3] - 2026-10-06
 
 ### Added
