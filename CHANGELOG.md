@@ -4,6 +4,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [2.5.5] - 2026-10-07
+
 2.5.3 and 2.5.4 were tagged but never published, because their release tests failed on GitHub's runner. This version contains all of their changes.
 
 ### Fixed
@@ -133,7 +135,8 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 - First tracked version: 20 modules, background service with a Full Disk Access helper, automatic weekly and new-app scans, inventory diff between scans, YARA (custom, YARA Forge core, Elastic macOS) and ClamAV, report retention.
 - Full Disk Access detection that tries several protected folders, and dynamic discovery of TCC databases (macOS 27 moved the per-user database).
 
-[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.4...HEAD
+[Unreleased]: https://github.com/aamir-067/macscan-cli/compare/v2.5.5...HEAD
+[2.5.5]: https://github.com/aamir-067/macscan-cli/compare/v2.5.4...v2.5.5
 [2.5.4]: https://github.com/aamir-067/macscan-cli/compare/v2.5.3...v2.5.4
 [2.5.3]: https://github.com/aamir-067/macscan-cli/compare/v2.5.2...v2.5.3
 [2.5.2]: https://github.com/aamir-067/macscan-cli/compare/v2.5.1...v2.5.2
