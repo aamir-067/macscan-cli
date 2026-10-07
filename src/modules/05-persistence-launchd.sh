@@ -3,10 +3,12 @@
 # shellcheck source=../core/common.sh
 source "$(dirname "$0")/../core/common.sh"
 section "launchd items: what they run and who signed it"
-# A home folder outside /Users (rare, and the test fixtures) is covered too.
-case "$UH" in /Users/*) HLA="";; *) HLA="$UH/Library/LaunchAgents";; esac
-for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAgents /var/root/Library/LaunchAgents /Library/StartupItems ${HLA:+"$HLA"}; do
+# The scanned user's folder is listed too (a home outside /Users, or the test fixtures);
+# a folder already covered by the /Users glob is not walked twice.
+SEEN=$'\n'
+for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAgents /var/root/Library/LaunchAgents /Library/StartupItems "$UH/Library/LaunchAgents"; do
   [ -d "$d" ] || continue
+  case "$SEEN" in *$'\n'"$d"$'\n'*) continue;; esac; SEEN="$SEEN$d"$'\n'
   sub "$d"; ls -laT "$d"
   for f in "$d"/* "$d"/.*; do
     [ -f "$f" ] || continue

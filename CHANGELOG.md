@@ -4,6 +4,11 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+2.5.3 and 2.5.4 were tagged but never published, because their release tests failed on GitHub's runner. This version contains all of their changes.
+
+### Fixed
+- Module 05 skipped the scanned user's LaunchAgents folder when the home folder was under `/Users` but not directly below it (it relied on the `/Users/*` pattern). It now always scans that folder, once.
+
 ## [2.5.4] - 2026-10-07
 
 2.5.3 was tagged but never published: its release tests hung on GitHub's runner (see below). This version contains all of 2.5.3.
