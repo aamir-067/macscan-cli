@@ -36,6 +36,18 @@ jobs:
       - name: Build tests
         run: make test-build
 
+      # Job logs need a signed-in account; annotations are public. Re-run the suites and put
+      # each failing test with its output in one annotation, so a failure can be read anywhere.
+      - name: Failing tests as annotations
+        if: failure()
+        run: |
+          for t in lint test-unit test-smoke test-detection test-build; do
+            make "$t" > "$RUNNER_TEMP/$t.log" 2>&1 && continue
+            msg=$( (grep -A12 '^not ok' "$RUNNER_TEMP/$t.log" || tail -25 "$RUNNER_TEMP/$t.log") | head -60)
+            msg=${msg//'%'/'%25'}; msg=${msg//$'\r'/}; msg=${msg//$'\n'/'%0A'}
+            echo "::error title=make $t failed::$msg"
+          done
+
       - name: Build
         run: make build
 
