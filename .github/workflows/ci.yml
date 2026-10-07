@@ -43,7 +43,7 @@ jobs:
         run: |
           for t in lint test-unit test-smoke test-detection test-build; do
             make "$t" > "$RUNNER_TEMP/$t.log" 2>&1 && continue
-            msg=$( (grep -A12 '^not ok' "$RUNNER_TEMP/$t.log" || tail -25 "$RUNNER_TEMP/$t.log") | head -60)
+            msg=$( (grep -A25 '^not ok' "$RUNNER_TEMP/$t.log" || tail -25 "$RUNNER_TEMP/$t.log") | head -60)
             msg=${msg//'%'/'%25'}; msg=${msg//$'\r'/}; msg=${msg//$'\n'/'%0A'}
             echo "::error title=make $t failed::$msg"
           done
