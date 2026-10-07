@@ -30,6 +30,10 @@ is_self(){ case "$1" in "$ROOT"/*|*com.mactriage.*) return 0;; esac; return 1; }
 # the same file as /private/tmp/x. Strip that prefix before judging where something lives.
 canon_path(){ case "$1" in /System/Volumes/Data/*) printf '%s\n' "${1#/System/Volumes/Data}";; *) printf '%s\n' "$1";; esac; }
 is_system_path(){ case "$1" in /System/Volumes/Data/*) return 1;; /System/*|/usr/libexec/*|/usr/sbin/*|/sbin/*|/bin/*|/usr/bin/*|/Library/Apple/*) return 0;; esac; return 1; }
+# plist_get <file> <key path> <format>: the value, or nothing. Older plutil (macOS 15 and
+# earlier) prints "Could not extract value..." on stdout for a missing key, so the exit
+# status decides, never the output.
+plist_get(){ local v; v=$(plutil -extract "$2" "$3" -o - "$1" 2>/dev/null) || return 0; printf '%s\n' "$v"; }
 # is_interpreter <program>: true for shells and script runners, including /usr/bin/env, which
 # launch items use to start a script without naming the interpreter's path.
 is_interpreter(){ case "${1##*/}" in osascript|bash|sh|zsh|dash|ksh|csh|tcsh|fish|python*|node|perl*|ruby|deno|bun|php|swift|tclsh|lua|curl|env) return 0;; esac; return 1; }

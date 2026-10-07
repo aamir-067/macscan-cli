@@ -17,9 +17,9 @@ for d in /Library/LaunchAgents /Library/LaunchDaemons /Users/*/Library/LaunchAge
     if is_self "$f"; then echo "  (mac-triage service)"; continue; fi
     echo "  created: $(stat -f '%SB' "$f")  modified: $(stat -f '%Sm' "$f")"
     case "$bn" in .*) flag "Hidden launch item file: $f";; esac
-    prog=$(plutil -extract Program raw -o - "$f" 2>/dev/null)
-    args=$(plutil -extract ProgramArguments json -o - "$f" 2>/dev/null)
-    label=$(plutil -extract Label raw -o - "$f" 2>/dev/null)
+    prog=$(plist_get "$f" Program raw)
+    args=$(plist_get "$f" ProgramArguments json)
+    label=$(plist_get "$f" Label raw)
     echo "  Label: $label"
     # AMOS backdoor (Moonlock 2025-07, Trend Micro 2025-09) runs ~/.agent from this daemon.
     case "$label|$bn" in com.finder.helper\|*|*\|com.finder.helper.plist) flag "Launch item name used by known Mac stealers: $f";; esac

@@ -178,3 +178,13 @@ teardown(){ drop_env; }
   not is_interpreter /usr/bin/true
   not is_interpreter "/Applications/X.app/Contents/MacOS/X"
 }
+
+@test "plist_get returns nothing when plutil reports a missing key on stdout" {
+  mkdir -p "$TEST_TMP/bin"
+  printf '#!/bin/bash\necho "Could not extract value, error: No value at that key path"\nexit 1\n' > "$TEST_TMP/bin/plutil"
+  chmod +x "$TEST_TMP/bin/plutil"
+  [ -z "$(PATH="$TEST_TMP/bin:$PATH" plist_get /x Program raw)" ]
+  printf '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0"><dict><key>Label</key><string>a.b</string></dict></plist>\n' > "$TEST_TMP/p.plist"
+  [ "$(plist_get "$TEST_TMP/p.plist" Label raw)" = a.b ]
+  [ -z "$(plist_get "$TEST_TMP/p.plist" Program raw)" ]
+}

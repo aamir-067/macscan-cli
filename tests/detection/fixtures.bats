@@ -230,6 +230,7 @@ launch_agent(){ # <file> <label> <program> [argument]
   launch_agent "$la/com.google.keystone.agent.plist" com.google.keystone.agent "$gu/GoogleUpdate"
   launch_agent "$la/com.google.real.plist" com.google.real /bin/ls
   mod 05
+  printf '%s\n' "$output" | grep -A5 "^\[item\] $la" || true   # shown only if the test fails
   grep -qxF "[05] Launch item name used by known Mac stealers: $la/com.finder.helper.plist" "$RUN/.flags.raw"
   grep -qxF "[05] Launch item uses a vendor name but runs a script: $la/com.google.keystone.agent.plist -> $gu/GoogleUpdate" "$RUN/.flags.raw"
   not grep -q "com.google.real.plist ->" "$RUN/.flags.raw"
@@ -239,5 +240,6 @@ launch_agent(){ # <file> <label> <program> [argument]
   la="$UH/Library/LaunchAgents"
   launch_agent "$la/test.env.plist" test.env /usr/bin/env python3
   mod 05
+  printf '%s\n' "$output" | grep -A5 "^\[item\] $la" || true   # shown only if the test fails
   grep -qF "[05] Launch item runs an interpreter directly: $la/test.env.plist -> " "$RUN/.flags.raw"
 }

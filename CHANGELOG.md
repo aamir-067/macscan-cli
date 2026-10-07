@@ -8,6 +8,7 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ### Fixed
 - Module 05 skipped the scanned user's LaunchAgents folder when the home folder was under `/Users` but not directly below it (it relied on the `/Users/*` pattern). It now always scans that folder, once.
+- On macOS 15 and earlier, `plutil` prints "Could not extract value" on standard output when a key is missing. Module 05 took that message as the program of every launch item that uses `ProgramArguments` instead of `Program` (most of them), so the location, interpreter and signature checks did not run for those items. The exit status now decides.
 
 ## [2.5.4] - 2026-10-07
 
